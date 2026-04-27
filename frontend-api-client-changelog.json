@@ -1,0 +1,15 @@
+{
+  "feature": "frontend-api-client-bootstrap",
+  "files": [
+    "src/lib/api/client.ts",
+    "src/lib/api/endpoints.ts",
+    "src/components/complaints/ComplaintFeed.tsx"
+  ],
+  "notes": [
+    "Typed HTTP client with get/post/patch/delete methods added",
+    "Cookie credentials and optional Bearer token support included",
+    "Initial complaint endpoint helpers created for progressive frontend migration",
+    "Public load-more feed flow now consumes /api/v1/complaints directly instead of server action"
+  ]
+}
+

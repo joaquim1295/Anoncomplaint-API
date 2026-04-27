@@ -1,0 +1,20 @@
+{
+  "feature": "api-company-admin",
+  "files": [
+    "src/app/api/v1/company/complaints/route.ts",
+    "src/app/api/v1/company/complaints/[id]/status/route.ts",
+    "src/app/api/v1/company/complaints/[id]/response/route.ts",
+    "src/app/api/v1/company/companies/route.ts",
+    "src/app/api/v1/company/companies/[id]/route.ts",
+    "src/app/api/v1/admin/users/route.ts",
+    "src/app/api/v1/admin/users/[id]/ban/route.ts",
+    "src/app/api/v1/admin/complaints/route.ts",
+    "src/app/api/v1/admin/complaints/[id]/route.ts"
+  ],
+  "notes": [
+    "Company management endpoints added with COMPANY guard",
+    "Admin moderation endpoints added with ADMIN guard",
+    "Existing service authorization semantics preserved"
+  ]
+}
+

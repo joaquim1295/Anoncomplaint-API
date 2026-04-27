@@ -1,0 +1,12 @@
+{
+  "feature": "api-auth-guards",
+  "files": [
+    "src/lib/api/auth.ts"
+  ],
+  "notes": [
+    "Bearer token parsing added",
+    "Cookie fallback authentication added",
+    "Role guard helper for USER/COMPANY/ADMIN added"
+  ]
+}
+

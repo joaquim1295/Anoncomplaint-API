@@ -1,0 +1,15 @@
+{
+  "feature": "api-public-read",
+  "files": [
+    "src/app/api/v1/complaints/route.ts",
+    "src/app/api/v1/complaints/search/route.ts",
+    "src/app/api/v1/stats/route.ts"
+  ],
+  "notes": [
+    "Public complaints feed endpoint created",
+    "Public complaints search endpoint created",
+    "Stats endpoint created",
+    "Pagination metadata returned in feed/search"
+  ]
+}
+

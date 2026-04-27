@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "AnonComplaint Mobile",
+    "slug": "anon-complaint-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#070A12"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.anoncomplaint.mobile"
+    }
+  }
+}
+

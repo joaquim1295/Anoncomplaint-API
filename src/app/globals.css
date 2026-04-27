@@ -1,0 +1,83 @@
+@import "leaflet/dist/leaflet.css";
+@import "swagger-ui-react/swagger-ui.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --anon-ghost: #070A12;
+  --anon-surface: #0B1220;
+  --anon-accent: #10B981;
+  --anon-muted: #162033;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-anon-ghost text-zinc-100 antialiased;
+  font-feature-settings: "ss01" 1, "cv02" 1, "cv03" 1;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.22);
+  color: rgb(244 244 245);
+}
+
+@layer base {
+  :focus-visible {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  .cyber-bg {
+    background-image:
+      radial-gradient(1200px 700px at 20% 10%, rgba(16, 185, 129, 0.16), transparent 60%),
+      radial-gradient(900px 600px at 80% 20%, rgba(239, 68, 68, 0.12), transparent 55%),
+      linear-gradient(to right, rgba(16, 185, 129, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(16, 185, 129, 0.06) 1px, transparent 1px);
+    background-size: auto, auto, 56px 56px, 56px 56px;
+    background-position: center, center, center, center;
+  }
+
+  .ring-cyber {
+    @apply focus-visible:ring-2 focus-visible:ring-emerald-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950;
+  }
+
+  @keyframes in-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes in-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    from { transform: translateX(-30%); }
+    to { transform: translateX(130%); }
+  }
+
+  .animate-in {
+    animation: in-fade 180ms ease-out both;
+  }
+  .fade-in {
+    animation: in-fade 180ms ease-out both;
+  }
+  .slide-in-from-bottom-2 {
+    animation: in-up 220ms cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-zinc-900/60 ring-1 ring-inset ring-zinc-800/70;
+  }
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.16), transparent);
+    transform: translateX(-30%);
+    animation: shimmer 1.1s ease-in-out infinite;
+  }
+}

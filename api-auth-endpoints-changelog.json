@@ -1,0 +1,15 @@
+{
+  "feature": "api-auth-endpoints",
+  "files": [
+    "src/app/api/v1/auth/register/route.ts",
+    "src/app/api/v1/auth/login/route.ts",
+    "src/app/api/v1/auth/logout/route.ts",
+    "src/app/api/v1/auth/me/route.ts"
+  ],
+  "notes": [
+    "REST endpoints for register/login/logout/me implemented",
+    "JWT cookie flow preserved for web compatibility",
+    "Login endpoint also returns bearer token for external clients"
+  ]
+}
+

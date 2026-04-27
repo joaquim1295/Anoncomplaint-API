@@ -1,0 +1,19 @@
+{
+  "feature": "api-foundation",
+  "files": [
+    "src/lib/api/http.ts",
+    "src/lib/api/openapi.ts",
+    "src/app/api/v1/health/route.ts",
+    "src/app/api/v1/openapi/route.ts",
+    "src/app/api-docs/page.tsx",
+    "docs/api-migration-todo.md",
+    "docs/api-migration-prompts.md",
+    "docs/api-migration-progress.md"
+  ],
+  "notes": [
+    "REST base path /api/v1 created",
+    "Health and OpenAPI endpoints available",
+    "Migration playbook and prompt sequence documented"
+  ]
+}
+
