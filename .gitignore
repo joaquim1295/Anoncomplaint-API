@@ -39,10 +39,10 @@ tmp/
 temp/
 *.tsbuildinfo
 
-# archives and backups
+# archives and backups (leading / = only at repo root)
 *.zip
-AnonComplaint-Vibcoded/
-components/
-logs_cursor/
-prompt_deterministicos/
+/AnonComplaint-Vibcoded/
+/components/
+/logs_cursor/
+/prompt_deterministicos/
 

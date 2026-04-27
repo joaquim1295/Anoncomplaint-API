@@ -9,6 +9,17 @@ git add .
 git commit -m "prepare api for vercel deployment"
 ```
 
+### Se o build na Vercel falhar com “Module not found … components/…”
+
+O `.gitignore` deve **não** ignorar `src/components`. Use apenas padrões com `/` no início para pastas na raiz do repo (ex.: `/components/` para a pasta legada na raiz, não `components/`).
+
+Depois de corrigir o ignore, confirme que o Git vê os ficheiros:
+
+```bash
+git add -f src/components
+git status
+```
+
 ## 2) Criar repositório no GitHub e enviar
 
 ```bash
