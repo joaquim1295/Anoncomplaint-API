@@ -1,5 +1,7 @@
 # Deploy API na Vercel + GitHub
 
+O app Expo em `mobile/` tem o próprio `package.json`. O `next build` na raiz **não** deve fazer typecheck dessa pasta: em `tsconfig.json` está `exclude: ["mobile", ...]` para a Vercel não falhar em `react-native`.
+
 ## 1) Preparar repositório Git local
 
 ```bash
