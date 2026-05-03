@@ -5,7 +5,7 @@ import * as complaintService from "../../../../../../lib/complaintService";
 import { ComplaintStatus } from "../../../../../../types/complaint";
 
 const schema = z.object({
-  status: z.nativeEnum(ComplaintStatus),
+  status: z.enum([ComplaintStatus.RESOLVED]),
 });
 
 export async function PATCH(
@@ -25,10 +25,10 @@ export async function PATCH(
   if (!parsed.success) {
     return jsonError("validation_error", "Invalid payload", 400, parsed.error.flatten());
   }
-  const result = await complaintService.updateComplaintStatusForCompany(
+  const result = await complaintService.resolveComplaintByUser(
     id,
     auth.session.userId,
-    parsed.data.status
+    auth.session.role
   );
   if (!result.success) return jsonError("update_failed", result.error, 400);
   return jsonData({ id, status: parsed.data.status });

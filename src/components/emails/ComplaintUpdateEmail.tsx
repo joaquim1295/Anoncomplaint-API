@@ -7,7 +7,7 @@ interface ComplaintUpdateEmailProps {
 }
 
 export function ComplaintUpdateEmail(props: ComplaintUpdateEmailProps) {
-  const url = (process.env.APP_URL ?? "https://anoncomplaint.local") + `/complaints/${props.complaintId}`;
+  const url = (process.env.APP_URL ?? "https://smartcomplaint.local") + `/complaints/${props.complaintId}`;
   return (
     <Html>
       <Head />
@@ -38,12 +38,13 @@ export function ComplaintUpdateEmail(props: ComplaintUpdateEmailProps) {
               style={{
                 fontSize: "14px",
                 lineHeight: "20px",
-                letterSpacing: "0.18em",
+                letterSpacing: "0.12em",
                 textTransform: "uppercase",
-                color: "#fca5a5",
+                color: "#e4e4e7",
               }}
             >
-              AnonComplaint
+              <span style={{ color: "#ef4444" }}>Smart</span>
+              <span>Complaint</span>
             </Text>
             <Text
               style={{

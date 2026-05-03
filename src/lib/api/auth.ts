@@ -32,7 +32,7 @@ export async function getApiSession(request: Request): Promise<ApiSession | null
 
   const user = await userRepository.findUserById(payload.userId);
   if (!user) return null;
-  if (user.banned_at) return null;
+  if (user.banned_at || user.deleted_at) return null;
 
   return {
     userId: String(user._id),

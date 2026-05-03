@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet.heat";
@@ -53,6 +53,7 @@ export function RageMap({
   points: RageMapPoint[];
   className?: string;
 }) {
+  const [isDark, setIsDark] = useState(false);
   const center = useMemo<[number, number]>(() => {
     if (!points.length) return [39.3999, -8.2245];
     const avgLat = points.reduce((acc, p) => acc + p.lat, 0) / points.length;
@@ -60,19 +61,35 @@ export function RageMap({
     return [avgLat, avgLng];
   }, [points]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncTheme = () => {
+      setIsDark(root.classList.contains("dark") || (!root.classList.contains("light") && media.matches));
+    };
+    syncTheme();
+    const observer = new MutationObserver(syncTheme);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    media.addEventListener("change", syncTheme);
+    return () => {
+      observer.disconnect();
+      media.removeEventListener("change", syncTheme);
+    };
+  }, []);
+
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-2xl bg-zinc-950/20 ring-1 ring-inset ring-zinc-800/70",
+        "overflow-hidden rounded-2xl bg-zinc-50/90 ring-1 ring-inset ring-zinc-200/90 dark:bg-zinc-950/20 dark:ring-zinc-800/70",
         className
       )}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-800/70 bg-zinc-950/25 px-4 py-3">
-        <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-100">
-          <span className="h-2 w-2 rounded-full bg-red-400 shadow-glow-red" aria-hidden />
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-200/90 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800/70 dark:bg-zinc-950/25">
+        <div className="flex items-center gap-2 text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <span className="h-2 w-2 rounded-full bg-red-500 dark:bg-red-400 dark:shadow-glow-red" aria-hidden />
           <span>Rage Map</span>
         </div>
-        <p className="text-xs text-zinc-400 tabular-nums">{points.length} pontos</p>
+        <p className="text-xs text-zinc-500 tabular-nums dark:text-zinc-400">{points.length} pontos</p>
       </div>
       <div className="h-[70vh] min-h-[420px] w-full">
         <MapContainer
@@ -84,7 +101,11 @@ export function RageMap({
           attributionControl={false}
         >
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url={
+              isDark
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            }
             subdomains={["a", "b", "c", "d"]}
           />
           {points.length > 0 ? <HeatLayer points={points} /> : null}

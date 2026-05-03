@@ -1,47 +1,94 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { createComplaintSchema, type CreateComplaintInput } from "../lib/validations";
+import { useI18n } from "../components/providers/I18nProvider";
+
+function translateIfKey(t: (path: string) => string, msg: string) {
+  return msg.startsWith("complaintForm.") ? t(msg) : msg;
+}
+
+function collectFieldErrorMessages(
+  t: (path: string) => string,
+  errors: FieldErrors<CreateComplaintInput>
+): string[] {
+  const out: string[] = [];
+  function walk(node: unknown, path: string): void {
+    if (node == null || typeof node !== "object") return;
+    const rec = node as Record<string, unknown>;
+    if (typeof rec.message === "string" && rec.message) {
+      out.push(`${path || "form"}: ${translateIfKey(t, rec.message)}`);
+      return;
+    }
+    for (const [k, v] of Object.entries(rec)) {
+      if (k === "ref" || k === "type" || k === "root") continue;
+      walk(v, path ? `${path}.${k}` : k);
+    }
+  }
+  walk(errors, "");
+  if (errors.root?.message) {
+    out.unshift(`root: ${translateIfKey(t, String(errors.root.message))}`);
+  }
+  return out;
+}
 
 export function useComplaintForm() {
+  const { t } = useI18n();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const form = useForm<CreateComplaintInput>({
     resolver: zodResolver(createComplaintSchema),
     defaultValues: {
+      title: "",
+      company_id: undefined,
       content: "",
+      attachments: [],
       tags: [],
       ghost_mode: true,
       location_city: "",
       location_lat: undefined,
       location_lng: undefined,
+      topic_slug: "",
     },
   });
 
-  const onSubmit = form.handleSubmit((values) => {
+  const onSubmit = form.handleSubmit(
+    (values) => {
     const formData = new FormData();
+    formData.set("title", values.title);
     formData.set("content", values.content);
+    if (values.company_id) formData.set("company_id", values.company_id);
     formData.set("tags", values.tags.join(","));
     formData.set("ghost_mode", String(values.ghost_mode));
-    const city = (values.location_city ?? "").trim();
-    if (city && typeof values.location_lat === "number" && typeof values.location_lng === "number") {
-      formData.set("location_city", city);
-      formData.set("location_lat", String(values.location_lat));
-      formData.set("location_lng", String(values.location_lng));
-    }
     startTransition(async () => {
+      const topicRaw = (values.topic_slug ?? "").trim();
+      const locCity = (values.location_city ?? "").trim();
+      const locLat =
+        typeof values.location_lat === "number" && !Number.isNaN(values.location_lat)
+          ? values.location_lat
+          : undefined;
+      const locLng =
+        typeof values.location_lng === "number" && !Number.isNaN(values.location_lng)
+          ? values.location_lng
+          : undefined;
       const payload = {
+        title: String(formData.get("title") ?? "").trim(),
+        company_id: String(formData.get("company_id") ?? "").trim() || undefined,
         content: String(formData.get("content") ?? ""),
+        attachments: values.attachments ?? [],
         tags: String(formData.get("tags") ?? "")
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean),
         ghost_mode: String(formData.get("ghost_mode") ?? "true") === "true",
-        location_city: String(formData.get("location_city") ?? "").trim() || undefined,
-        location_lat: formData.get("location_lat") ? Number(formData.get("location_lat")) : undefined,
-        location_lng: formData.get("location_lng") ? Number(formData.get("location_lng")) : undefined,
+        location_city: locCity || undefined,
+        location_lat: locLat,
+        location_lng: locLng,
+        ...(topicRaw ? { topic_slug: topicRaw.replace(/^#/, "").toLowerCase() } : {}),
       };
       const response = await fetch("/api/v1/complaints", {
         method: "POST",
@@ -51,16 +98,34 @@ export function useComplaintForm() {
       });
       const result = await response.json().catch(() => null);
       if (!response.ok) {
-        form.setError("root", { message: result?.error?.message ?? "Não foi possível criar a denúncia." });
+        const raw = result?.error?.message ?? "complaintForm.toastCreateFailed";
+        const msg = translateIfKey(t, raw);
+        const details = result?.error?.details;
+        const detailStr =
+          details == null ? "" : typeof details === "string" ? ` ${details}` : ` ${JSON.stringify(details)}`;
+        const full = msg + detailStr;
+        form.setError("root", { message: full });
+        toast.error(full);
       } else {
         const flagged = Boolean(result?.data?.flagged);
         form.reset();
         if (flagged) {
-          toast.warning("A denúncia foi enviada e está em revisão. Será publicada após moderação.");
+          toast.warning(t("complaintForm.toastModerationPending"));
+        } else {
+          toast.success(t("complaintForm.toastCreateSuccess"));
         }
+        router.refresh();
       }
     });
-  });
+    },
+    (errors) => {
+      const msgs = collectFieldErrorMessages(t, errors);
+      const root = errors.root?.message ? translateIfKey(t, String(errors.root.message)) : null;
+      const text =
+        msgs.length > 0 ? msgs.join(" | ") : root ?? t("complaintForm.validation.invalidPayload");
+      toast.error(text);
+    }
+  );
 
   return {
     register: form.register,

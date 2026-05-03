@@ -1,36 +1,52 @@
+import type { Metadata } from "next";
 import * as complaintService from "../../lib/complaintService";
-import * as complaintRepository from "../../lib/repositories/complaintRepository";
+import * as analyticsService from "../../lib/services/analytics";
 import { AnalyticsView } from "./view";
 import type { RageMapPoint } from "../../components/complaints/RageMap";
 
-function intensityForStatus(status: string): number {
-  if (status === "pending_review") return 1.0;
-  if (status === "pending") return 0.8;
-  if (status === "reviewed") return 0.7;
-  if (status === "resolved") return 0.55;
-  return 0.6;
-}
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Estatísticas",
+  description: "Tendências, mapa e métricas de denúncias e reputação.",
+};
 
 export default async function AnalyticsPage() {
-  const [trends, stats, docs] = await Promise.all([
+  const [trends, stats, feed, companyReputation] = await Promise.all([
     complaintService.getWeeklyTrends(),
     complaintService.getStats(),
-    complaintRepository.findAll(),
+    complaintService.getFeed({ limit: 300 }),
+    analyticsService.getOverallCompanyStats(),
   ]);
-  const mapPoints: RageMapPoint[] = docs
+
+  const mapPoints: RageMapPoint[] = feed
     .filter((c) => c.location && typeof c.location.lat === "number" && typeof c.location.lng === "number")
     .map((c) => ({
-      id: String(c._id),
+      id: c.id,
       lat: c.location!.lat,
       lng: c.location!.lng,
       city: c.location!.city,
-      intensity: intensityForStatus(String(c.status)),
+      intensity: 0.7,
     }));
+
+  const complaintRows = feed.map((c) => ({
+    id: c.id,
+    title: c.title ?? "Sem título",
+    status: c.status,
+    companyName: c.companyName ?? null,
+    city: c.location?.city ?? null,
+    content: c.content,
+    createdAtLabel: c.created_at_label,
+    attachments: c.attachments ?? [],
+  }));
+
   return (
     <AnalyticsView
       trends={trends}
       total={stats.total}
       mapPoints={mapPoints}
+      companyReputation={companyReputation}
+      complaints={complaintRows}
     />
   );
 }

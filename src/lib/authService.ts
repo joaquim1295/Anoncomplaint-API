@@ -1,20 +1,37 @@
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 import * as userRepository from "./repositories/userRepository";
 import type { UserDocument } from "../models/User";
 import { UserRole } from "../types/user";
 
+const rawSecret = process.env.JWT_SECRET;
+if (!rawSecret || rawSecret.length < 32) {
+  throw new Error("FATAL ERROR: JWT_SECRET is missing or too short. It must be at least 32 characters long.");
+}
+
 const SALT_ROUNDS = 12;
-const PEPPER = process.env.PASSWORD_PEPPER ?? process.env.JWT_SECRET ?? "default-pepper-min-32-chars";
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "default-jwt-secret-min-32-chars"
-);
+const JWT_SECRET = new TextEncoder().encode(rawSecret);
+
+function getPasswordPepper(): string {
+  const pepperEnv = process.env.PASSWORD_PEPPER?.trim();
+  if (process.env.NODE_ENV === "production") {
+    if (!pepperEnv || pepperEnv.length < 16) {
+      throw new Error(
+        "FATAL: PASSWORD_PEPPER must be set in production (min 16 chars), independente de JWT_SECRET."
+      );
+    }
+    return pepperEnv;
+  }
+  return String(pepperEnv ?? rawSecret);
+}
+
 const JWT_ISSUER = "anon-complaint";
 const JWT_AUDIENCE = "anon-complaint";
 const JWT_EXPIRY = "7d";
 
 function pepper(password: string): string {
-  return password + PEPPER;
+  return password + getPasswordPepper();
 }
 
 export async function hashPassword(password: string): Promise<{ hash: string; salt: string }> {
@@ -45,13 +62,19 @@ export async function register(data: {
     if (byUsername) return { success: false, error: "Username já em uso" };
   }
   const { hash, salt } = await hashPassword(data.password);
+  const emailNorm = data.email.toLowerCase().trim();
+  const verifyToken = crypto.randomBytes(24).toString("hex");
+  const verifyExpires = new Date(Date.now() + 48 * 60 * 60 * 1000);
   try {
     const user = await userRepository.create({
-      email: data.email,
+      email: emailNorm,
       username: data.username,
       password_hash: hash,
       salt,
       role: data.role,
+      email_verified: false,
+      email_verify_token: verifyToken,
+      email_verify_expires: verifyExpires,
     });
     return { success: true, user };
   } catch (err: unknown) {
@@ -70,13 +93,14 @@ export async function login(emailOrUsername: string, password: string): Promise<
   const user = await userRepository.findByEmailOrUsername(emailOrUsername);
   if (!user) return { success: false, error: "Credenciais inválidas" };
   if (user.banned_at) return { success: false, error: "Conta suspensa" };
+  if (user.deleted_at) return { success: false, error: "Conta não disponível" };
   const ok = await verifyPassword(password, user.password_hash);
   if (!ok) return { success: false, error: "Credenciais inválidas" };
   return { success: true, user };
 }
 
-export async function generateJWT(userId: string): Promise<string> {
-  return new SignJWT({ sub: userId })
+export async function generateJWT(userId: string, role: string = UserRole.USER): Promise<string> {
+  return new SignJWT({ sub: userId, role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer(JWT_ISSUER)
     .setAudience(JWT_AUDIENCE)
@@ -84,7 +108,7 @@ export async function generateJWT(userId: string): Promise<string> {
     .sign(JWT_SECRET);
 }
 
-export async function verifyJWT(token: string): Promise<{ userId: string } | null> {
+export async function verifyJWT(token: string): Promise<{ userId: string; role: string } | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET, {
       issuer: JWT_ISSUER,
@@ -92,7 +116,8 @@ export async function verifyJWT(token: string): Promise<{ userId: string } | nul
     });
     const sub = payload.sub;
     if (!sub || typeof sub !== "string") return null;
-    return { userId: sub };
+    const role = typeof payload.role === "string" ? payload.role : UserRole.USER;
+    return { userId: sub, role };
   } catch {
     return null;
   }
@@ -106,13 +131,29 @@ export async function verifyCurrentPassword(userId: string, password: string): P
 
 export async function updateUsername(
   userId: string,
-  newUsername: string
+  newUsername: string,
+  profileImage?: string | null,
+  extras?: {
+    bio?: string | null;
+    location?: string | null;
+    website?: string | null;
+    public_profile_enabled?: boolean;
+  }
 ): Promise<{ success: true; user: UserDocument } | { success: false; error: string }> {
   const trimmed = newUsername.trim();
   if (!trimmed) return { success: false, error: "Username obrigatório" };
   const existing = await userRepository.findByUsername(trimmed);
   if (existing && String(existing._id) !== userId) return { success: false, error: "Username já em uso" };
-  const user = await userRepository.updateById(userId, { username: trimmed });
+  const user = await userRepository.updateById(userId, {
+    username: trimmed,
+    ...(profileImage !== undefined ? { profile_image: profileImage } : {}),
+    ...(extras?.bio !== undefined ? { bio: extras.bio } : {}),
+    ...(extras?.location !== undefined ? { location: extras.location } : {}),
+    ...(extras?.website !== undefined ? { website: extras.website } : {}),
+    ...(extras?.public_profile_enabled !== undefined
+      ? { public_profile_enabled: extras.public_profile_enabled }
+      : {}),
+  });
   if (!user) return { success: false, error: "Utilizador não encontrado" };
   return { success: true, user };
 }
@@ -136,4 +177,33 @@ export async function updateRoleToCompany(
   const user = await userRepository.updateById(userId, { role: UserRole.COMPANY });
   if (!user) return { success: false, error: "Não foi possível atualizar o perfil" };
   return { success: true, user };
+}
+
+export async function resetPasswordWithToken(
+  token: string,
+  newPassword: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  const user = await userRepository.findByPasswordResetToken(token.trim());
+  if (!user) return { success: false, error: "Token inválido ou expirado." };
+  const { hash, salt } = await hashPassword(newPassword);
+  await userRepository.updateById(String(user._id), {
+    password_hash: hash,
+    salt,
+    password_reset_token: null,
+    password_reset_expires: null,
+  });
+  return { success: true };
+}
+
+export async function confirmUserEmailWithToken(
+  token: string
+): Promise<{ success: true } | { success: false; error: string }> {
+  const user = await userRepository.findByEmailVerifyToken(token.trim());
+  if (!user) return { success: false, error: "Token inválido ou expirado." };
+  await userRepository.updateById(String(user._id), {
+    email_verified: true,
+    email_verify_token: null,
+    email_verify_expires: null,
+  });
+  return { success: true };
 }

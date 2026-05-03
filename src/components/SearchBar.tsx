@@ -14,7 +14,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({
-  placeholder = "Pesquisar...",
+  placeholder = "Procurar…",
   onSearch,
   debounceMs = 300,
   className,
@@ -49,7 +49,7 @@ export function SearchBar({
 
   return (
     <div className={cn("relative w-full max-w-sm", className)}>
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-300/80" aria-hidden />
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-700/80 dark:text-emerald-300/80" aria-hidden />
       <Input
         type="search"
         placeholder={placeholder}
@@ -61,7 +61,7 @@ export function SearchBar({
       {value.trim().length > 0 && (
         <button
           type="button"
-          className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-zinc-400 ring-cyber transition hover:bg-zinc-900/50 hover:text-zinc-100"
+          className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-zinc-500 ring-cyber transition hover:bg-zinc-200/80 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900/50 dark:hover:text-zinc-100"
           onClick={() => {
             setValue("");
             onSearch?.("");

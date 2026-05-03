@@ -18,6 +18,22 @@ export async function create(data: {
   return doc.toObject() as NotificationDocument;
 }
 
+export async function createMany(
+  items: { userId: string; title: string; message: string; complaintId?: string | null }[]
+): Promise<void> {
+  if (!items.length) return;
+  await getConnection();
+  await NotificationModel.insertMany(
+    items.map((d) => ({
+      userId: d.userId,
+      title: d.title,
+      message: d.message,
+      complaintId: d.complaintId ?? null,
+    })),
+    { ordered: false }
+  );
+}
+
 export async function findByUserId(
   userId: string,
   options: { limit?: number; offset?: number; onlyUnread?: boolean } = {}

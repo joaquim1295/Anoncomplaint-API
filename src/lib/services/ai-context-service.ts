@@ -5,12 +5,16 @@ export type AIComplaintContext = {
   company: string;
   issue: string;
   severity: number;
+  tone: string;
+  legalAdvice: string;
 };
 
 const AiContextSchema = z.object({
   company: z.string().min(1).max(120),
   issue: z.string().min(1).max(120),
   severity: z.number().int().min(1).max(10),
+  tone: z.string().min(1).max(140),
+  legalAdvice: z.string().min(1).max(600),
 });
 
 export async function extractComplaintContext(input: {
@@ -45,11 +49,15 @@ export async function extractComplaintContext(input: {
             "{\n" +
             '  "company": "string",\n' +
             '  "issue": "string",\n' +
-            '  "severity": number\n' +
+            '  "severity": number,\n' +
+            '  "tone": "string",\n' +
+            '  "legalAdvice": "string"\n' +
             "}\n" +
             "Constraints:\n" +
             "- severity: integer 1..10\n" +
-            "- company/issue: short strings\n",
+            "- company/issue: short strings\n" +
+            "- tone: short characterization (e.g., angry, frustrated, calm)\n" +
+            '- legalAdvice: concise, practical steps and rights (informational, non-binding)',
         },
         {
           role: "user",

@@ -1,5 +1,6 @@
 import {
   createComplaintSchema,
+  formatZodIssuesForClient,
   updateComplaintStatusSchema,
   complaintIdSchema,
 } from "../lib/validations";
@@ -8,6 +9,7 @@ import { ComplaintStatus } from "../types/complaint";
 describe("createComplaintSchema", () => {
   it("accepts valid input with content, tags, ghost_mode", () => {
     const result = createComplaintSchema.safeParse({
+      title: "Título válido",
       content: "A".repeat(10),
       tags: ["tag1"],
       ghost_mode: true,
@@ -17,6 +19,7 @@ describe("createComplaintSchema", () => {
 
   it("rejects content shorter than 10 characters", () => {
     const result = createComplaintSchema.safeParse({
+      title: "X",
       content: "short",
       tags: [],
       ghost_mode: true,
@@ -26,6 +29,7 @@ describe("createComplaintSchema", () => {
 
   it("rejects content longer than 2000 characters", () => {
     const result = createComplaintSchema.safeParse({
+      title: "X",
       content: "A".repeat(2001),
       tags: [],
       ghost_mode: true,
@@ -35,6 +39,7 @@ describe("createComplaintSchema", () => {
 
   it("rejects more than 10 tags", () => {
     const result = createComplaintSchema.safeParse({
+      title: "Título",
       content: "A".repeat(10),
       tags: Array(11).fill("x"),
       ghost_mode: true,
@@ -42,8 +47,18 @@ describe("createComplaintSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("formatZodIssuesForClient lists paths", () => {
+    const result = createComplaintSchema.safeParse({ title: "", content: "short" });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const s = formatZodIssuesForClient(result.error.issues);
+      expect(s).toMatch(/title|content/);
+    }
+  });
+
   it("defaults ghost_mode to true", () => {
     const result = createComplaintSchema.safeParse({
+      title: "X",
       content: "A".repeat(10),
       tags: [],
     });

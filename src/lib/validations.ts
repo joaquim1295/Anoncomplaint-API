@@ -1,7 +1,18 @@
 import { z } from "zod";
 import { ComplaintStatus } from "../types/complaint";
 
-const objectIdSchema = z.string().min(24).max(24).regex(/^[a-f0-9]{24}$/i, "ID inválido");
+/** Mensagem única para API/cliente a partir de issues Zod. */
+export function formatZodIssuesForClient(issues: z.ZodIssue[]): string {
+  return issues
+    .map((i) => `${i.path.length ? i.path.join(".") : "body"}: ${i.message}`)
+    .join(" | ");
+}
+
+const objectIdSchema = z
+  .string()
+  .min(24)
+  .max(24)
+  .regex(/^[a-f0-9]{24}$/i, "complaintForm.validation.invalidId");
 
 function optionalNumberInRange(options: { min: number; max: number }) {
   return z.preprocess((v) => {
@@ -14,27 +25,68 @@ function optionalNumberInRange(options: { min: number; max: number }) {
 
 export const createComplaintSchema = z
   .object({
-    content: z.string().min(10, "Mínimo 10 caracteres").max(2000),
-    tags: z.array(z.string().min(1).max(50)).max(10).default([]),
-    ghost_mode: z.boolean().default(true),
+    title: z.preprocess(
+      (v) => String(v ?? "").trim(),
+      z.string().min(1, "complaintForm.validation.titleRequired").max(100, "complaintForm.validation.titleMax100")
+    ),
+    company_id: z.preprocess((v) => {
+      if (v === "" || v === null || v === undefined) return undefined;
+      const s = String(v).trim();
+      return s === "" ? undefined : s;
+    }, objectIdSchema.optional()),
+    content: z.preprocess(
+      (v) => String(v ?? ""),
+      z.string().min(10, "complaintForm.validation.contentMin10").max(2000, "complaintForm.validation.contentMax2000")
+    ),
+    attachments: z.preprocess((v) => {
+      if (Array.isArray(v)) return v.map((x) => String(x ?? "").trim()).filter(Boolean);
+      if (typeof v === "string" && v.trim()) return [v.trim()];
+      return [];
+    }, z.array(z.string().max(2_000_000)).max(4).default([])),
+    tags: z.preprocess((v) => {
+      if (Array.isArray(v)) return v.map((x) => String(x ?? "").trim()).filter(Boolean);
+      if (typeof v === "string") return v.split(",").map((s) => s.trim()).filter(Boolean);
+      return [];
+    }, z.array(z.string().min(1).max(50)).max(10).default([])),
+    ghost_mode: z.preprocess((v) => {
+      if (v === true || v === "true" || v === 1 || v === "1") return true;
+      if (v === false || v === "false" || v === 0 || v === "0") return false;
+      return true;
+    }, z.boolean().default(true)),
     location_city: z
-      .string()
-      .max(120)
-      .transform((v) => v.trim())
-      .optional()
-      .default(""),
+      .preprocess((v) => String(v ?? "").trim(), z.string().max(120).optional().default("")),
     location_lat: optionalNumberInRange({ min: -90, max: 90 }).optional(),
     location_lng: optionalNumberInRange({ min: -180, max: 180 }).optional(),
+    topic_slug: z.preprocess((v) => {
+      if (v == null || v === "") return undefined;
+      const s = String(v).replace(/^#/, "").trim().toLowerCase();
+      return s === "" ? undefined : s;
+    }, z.string().max(80).optional()),
   })
   .superRefine((v, ctx) => {
     const city = (v.location_city ?? "").trim();
-    const lat = v.location_lat;
-    const lng = v.location_lng;
+    const latRaw = v.location_lat;
+    const lngRaw = v.location_lng;
+    const lat = latRaw !== undefined && typeof latRaw === "number" && !Number.isNaN(latRaw) ? latRaw : undefined;
+    const lng = lngRaw !== undefined && typeof lngRaw === "number" && !Number.isNaN(lngRaw) ? lngRaw : undefined;
     const any = Boolean(city) || lat !== undefined || lng !== undefined;
     if (!any) return;
-    if (!city) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Cidade obrigatória", path: ["location_city"] });
-    if (lat === undefined || Number.isNaN(lat)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Latitude inválida", path: ["location_lat"] });
-    if (lng === undefined || Number.isNaN(lng)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Longitude inválida", path: ["location_lng"] });
+    if (!city) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "complaintForm.validation.cityRequired", path: ["location_city"] });
+    if (lat === undefined)
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "complaintForm.validation.latitudeInvalid", path: ["location_lat"] });
+    if (lng === undefined)
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "complaintForm.validation.longitudeInvalid", path: ["location_lng"] });
+  })
+  .superRefine((v, ctx) => {
+    const slug = v.topic_slug;
+    if (!slug) return;
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "complaintForm.validation.topicSlugInvalid",
+        path: ["topic_slug"],
+      });
+    }
   });
 
 export const updateComplaintStatusSchema = z.object({
@@ -48,6 +100,7 @@ export const complaintIdSchema = z.object({
 
 export const officialResponseSchema = z.object({
   complaint_id: objectIdSchema,
+  company_id: objectIdSchema,
   content: z.string().min(10, "Mínimo 10 caracteres").max(2000),
 });
 

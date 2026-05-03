@@ -1,36 +1,36 @@
-import Link from "next/link";
-import { ArrowLeft, BriefcaseBusiness } from "lucide-react";
-import { getCurrentUser } from "../../lib/getUser";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { getI18n } from "../../lib/i18n/request";
+import { getMessage } from "../../lib/i18n/dict";
+import { getResolvedAccountMode } from "../../lib/accountMode";
 import * as complaintService from "../../lib/complaintService";
+import * as inboxService from "../../lib/services/inbox-service";
 import { DashboardEmpresaView } from "./view";
 
+export const metadata: Metadata = {
+  title: "Painel Empresa",
+  description: "Gestão de denúncias e mensagens como empresa.",
+};
+
 export default async function DashboardEmpresaPage() {
-  const user = await getCurrentUser();
-  if (!user) {
-    return null;
-  }
-  const complaints = await complaintService.getFeedByCompanyUserId(user.userId, {
-    limit: 100,
-    offset: 0,
-  });
+  const ctx = await getResolvedAccountMode();
+  if (!ctx.user) redirect("/login?from=/dashboard-empresa");
+  if (!ctx.canCompanyMode || ctx.mode !== "company") redirect("/");
+
+  const [{ messages }, complaints, conversations] = await Promise.all([
+    getI18n(),
+    complaintService.getFeedForOwnedCompaniesDashboard(ctx.user.userId, { limit: 200 }),
+    inboxService.listConversationsForActor(ctx.user.userId),
+  ]);
+
+  const tr = (key: string) => getMessage(messages, key);
 
   return (
     <div className="min-h-screen px-4 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/70 pb-5">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium tracking-tight text-zinc-200 ring-cyber transition hover:bg-zinc-900/45 hover:text-zinc-100"
-          >
-            <ArrowLeft className="h-4 w-4 text-emerald-300/90" aria-hidden />
-            <span>AnonComplaint</span>
-          </Link>
-          <h1 className="inline-flex items-center gap-2 text-base font-semibold tracking-tight text-zinc-100">
-            <BriefcaseBusiness className="h-4 w-4 text-emerald-300/90" aria-hidden />
-            <span>Dashboard da Empresa</span>
-          </h1>
-        </header>
-        <DashboardEmpresaView complaints={complaints} />
+        <PageHeader title={tr("dashboard.pageTitle")} iconName="briefcaseBusiness" />
+        <DashboardEmpresaView companies={ctx.companies} complaints={complaints} conversations={conversations} />
       </div>
     </div>
   );

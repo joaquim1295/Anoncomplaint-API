@@ -5,6 +5,7 @@ import * as complaintService from "../../../../../../../lib/complaintService";
 import { UserRole } from "../../../../../../../types/user";
 
 const schema = z.object({
+  companyId: z.string().min(1),
   content: z.string().min(10).max(2000),
 });
 
@@ -14,7 +15,7 @@ export async function POST(
 ) {
   const auth = await requireApiAuth(request);
   if (!auth.ok) return auth.response;
-  const role = requireRole(auth.session, [UserRole.COMPANY]);
+  const role = requireRole(auth.session, [UserRole.USER, UserRole.COMPANY, UserRole.ADMIN]);
   if (!role.ok) return role.response;
   const { id } = await params;
   let body: unknown;
@@ -30,7 +31,9 @@ export async function POST(
   const result = await complaintService.addOfficialResponse(
     id,
     auth.session.userId,
-    parsed.data.content
+    parsed.data.companyId,
+    parsed.data.content,
+    { bypassOwnership: auth.session.role === UserRole.ADMIN }
   );
   if (!result.success) return jsonError("response_failed", result.error, 400);
   return jsonData({ id, responded: true });

@@ -1,16 +1,11 @@
 import { redirect } from "next/navigation";
-import { ReactNode } from "react";
-import { getCurrentUser } from "../../lib/getUser";
-import { UserRole } from "../../types/user";
+import type { ReactNode } from "react";
+import { getResolvedAccountMode } from "../../lib/accountMode";
 
-export default async function DashboardEmpresaLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  const user = await getCurrentUser();
-  if (!user || user.role !== UserRole.COMPANY) {
-    redirect("/");
-  }
+export default async function DashboardEmpresaLayout({ children }: { children: ReactNode }) {
+  const ctx = await getResolvedAccountMode();
+  if (!ctx.user) redirect("/login?from=/dashboard-empresa");
+  if (!ctx.canCompanyMode) redirect("/");
+  if (ctx.mode !== "company") redirect("/");
   return <>{children}</>;
 }

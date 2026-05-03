@@ -1,28 +1,43 @@
 import mongoose from "mongoose";
 
+const DEFAULT_DB = "anon_complaint_db";
+
 declare global {
-  var _mongooseConnection: Promise<typeof mongoose> | undefined;
+  var mongooseCache: {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+  } | undefined;
 }
 
-const DEFAULT_DB = "anon_complaint";
-
-/** Constrói a URI garantindo que o nome da base de dados está presente (para MongoDB Atlas). */
-function getMongoUri(): string {
-  const raw = process.env.MONGODB_URI ?? `mongodb://localhost:27017/${DEFAULT_DB}`;
-  const dbName = process.env.MONGODB_DB ?? DEFAULT_DB;
-
-  if (raw.includes(".mongodb.net/") && !raw.match(/\.mongodb\.net\/[^/?]/)) {
-    return raw.replace(".mongodb.net/", `.mongodb.net/${dbName}`);
-  }
-  if (raw.includes("localhost") && !raw.includes("localhost:27017/")) {
-    return raw.replace(/(localhost:\d+)\/?/, `$1/${dbName}`);
-  }
-  return raw;
+let cached = global.mongooseCache;
+if (!cached) {
+  cached = global.mongooseCache = { conn: null, promise: null };
 }
 
-export function getConnection(): Promise<typeof mongoose> {
-  if (global._mongooseConnection) return global._mongooseConnection;
-  const uri = getMongoUri();
-  global._mongooseConnection = mongoose.connect(uri);
-  return global._mongooseConnection;
+export async function getConnection(): Promise<typeof mongoose> {
+  if (cached!.conn) return cached!.conn;
+
+  if (!cached!.promise) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) throw new Error("MONGODB_URI não definida");
+
+    const maxPoolSize = Number(process.env.MONGODB_MAX_POOL_SIZE ?? "50");
+    cached!.promise = mongoose.connect(uri, {
+      dbName: process.env.MONGODB_DB ?? DEFAULT_DB,
+      bufferCommands: false,
+      maxPoolSize: Number.isFinite(maxPoolSize) && maxPoolSize > 0 ? Math.min(200, maxPoolSize) : 50,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      autoIndex: process.env.NODE_ENV !== "production",
+    }).then((m) => m);
+  }
+
+  try {
+    cached!.conn = await cached!.promise;
+  } catch (e) {
+    cached!.promise = null;
+    throw e;
+  }
+
+  return cached!.conn;
 }

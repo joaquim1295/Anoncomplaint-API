@@ -172,7 +172,10 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <Text style={styles.brand}>AnonComplaint Mobile</Text>
+        <Text style={styles.brand}>
+          <Text style={styles.brandSmart}>Smart</Text>
+          <Text style={styles.brandRest}>Complaint Mobile</Text>
+        </Text>
         <Text style={styles.subtitle}>{title}</Text>
         <Text style={styles.apiUrl}>API: {API_BASE_URL}</Text>
       </View>
@@ -330,7 +333,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#070A12", paddingTop: 16 },
   center: { flex: 1, backgroundColor: "#070A12", alignItems: "center", justifyContent: "center", gap: 12 },
   header: { paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: "#27272a" },
-  brand: { color: "#f4f4f5", fontSize: 18, fontWeight: "700" },
+  brand: { fontSize: 18, fontWeight: "700" },
+  brandSmart: { color: "#ef4444", fontSize: 18, fontWeight: "700" },
+  brandRest: { color: "#f4f4f5", fontSize: 18, fontWeight: "700" },
   subtitle: { color: "#a1a1aa", marginTop: 2 },
   apiUrl: { color: "#52525b", marginTop: 4, fontSize: 12 },
   panel: { flex: 1, paddingHorizontal: 16, paddingTop: 12 },

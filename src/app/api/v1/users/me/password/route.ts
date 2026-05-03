@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requireApiAuth } from "../../../../../../lib/api/auth";
 import { jsonData, jsonError } from "../../../../../../lib/api/http";
 import * as authService from "../../../../../../lib/authService";
+import { authPasswordLimiter, getClientIp, rateLimitOrNull } from "../../../../../../lib/rate-limit";
 
 const schema = z.object({
   currentPassword: z.string().min(1),
@@ -13,6 +14,9 @@ const schema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  const limited = await rateLimitOrNull(authPasswordLimiter, getClientIp(request), "authPassword");
+  if (limited) return limited;
+
   const auth = await requireApiAuth(request);
   if (!auth.ok) return auth.response;
   let body: unknown;

@@ -4,9 +4,10 @@ import { jsonData, jsonError, parsePagination } from "../../../../../lib/api/htt
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const q = (url.searchParams.get("q") ?? "").trim();
+  const company = (url.searchParams.get("company") ?? "").trim();
   if (!q) return jsonError("validation_error", "Query parameter 'q' is required", 400);
   const { page, limit } = parsePagination(url.searchParams);
-  const docs = await complaintService.searchComplaints(q, { limit });
+  const docs = await complaintService.searchComplaints(q, { limit, companyId: company || undefined });
   const hasMore = docs.length === limit;
   return jsonData(docs, undefined, { page, limit, hasMore });
 }

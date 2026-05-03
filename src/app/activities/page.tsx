@@ -1,10 +1,19 @@
-import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Activity, ArrowLeft, Inbox } from "lucide-react";
+import { Inbox } from "lucide-react";
+import { PageHeader } from "../../components/layout/PageHeader";
+import { getI18n } from "../../lib/i18n/request";
+import { getMessage } from "../../lib/i18n/dict";
 import { getCurrentUser } from "../../lib/getUser";
 import * as complaintService from "../../lib/complaintService";
 import { ComplaintItem } from "../../components/ComplaintItem";
 import { DeleteComplaintButton } from "../../components/complaints/DeleteComplaintButton";
+import { EditOwnComplaintButton } from "../../components/complaints/EditOwnComplaintButton";
+
+export const metadata: Metadata = {
+  title: "As minhas actividades",
+  description: "Denúncias e interações ligadas à sua conta.",
+};
 
 export default async function ActivitiesPage() {
   const user = await getCurrentUser();
@@ -12,32 +21,22 @@ export default async function ActivitiesPage() {
     redirect("/login?from=/activities");
   }
 
-  const feed = await complaintService.getFeedByUserId(user.userId, { limit: 50 });
+  const [feed, { messages }] = await Promise.all([
+    complaintService.getFeedByUserId(user.userId, { limit: 50 }),
+    getI18n(),
+  ]);
+  const tr = (key: string) => getMessage(messages, key);
 
   return (
     <div className="min-h-screen px-4 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/70 pb-5">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium tracking-tight text-zinc-200 ring-cyber transition hover:bg-zinc-900/45 hover:text-zinc-100"
-          >
-            <ArrowLeft className="h-4 w-4 text-emerald-300/90" aria-hidden />
-            <span>AnonComplaint</span>
-          </Link>
-          <h1 className="inline-flex items-center gap-2 text-base font-semibold tracking-tight text-zinc-100">
-            <Activity className="h-4 w-4 text-emerald-300/90" aria-hidden />
-            <span>As minhas actividades</span>
-          </h1>
-        </header>
+        <PageHeader title={tr("activities.title")} iconName="activity" />
         <section>
           {feed.length === 0 ? (
-            <div className="rounded-2xl bg-zinc-950/25 p-6 ring-1 ring-inset ring-zinc-800/70">
+            <div className="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-6 ring-1 ring-inset ring-zinc-200/60 dark:border-zinc-800/70 dark:bg-zinc-950/25 dark:ring-zinc-800/70">
               <div className="flex items-center gap-3">
-                <Inbox className="h-5 w-5 text-emerald-300/90" aria-hidden />
-                <p className="text-sm leading-6 text-zinc-300">
-                  Ainda não tem denúncias associadas à sua conta.
-                </p>
+                <Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-300/90" aria-hidden />
+                <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-300">{tr("activities.emptyFeed")}</p>
               </div>
             </div>
           ) : (
@@ -50,7 +49,14 @@ export default async function ActivitiesPage() {
                   currentUserRole={user.role}
                   isSubscribed={user.subscribedComplaints?.includes(c.id)}
                   actions={
-                    <div className="flex justify-end">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <EditOwnComplaintButton
+                        complaintId={c.id}
+                        title={c.title ?? ""}
+                        content={c.content}
+                        disabled={(c.officialResponses ?? []).length > 0}
+                        disabledReason={tr("activities.editDisabledAfterOfficial")}
+                      />
                       <DeleteComplaintButton complaintId={c.id} />
                     </div>
                   }

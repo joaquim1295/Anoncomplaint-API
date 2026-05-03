@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { AlertTriangle, BadgeCheck, Building2, Gauge, Sparkles, X } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Building2, Gauge, Lock, Sparkles, X } from "lucide-react";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
 import { Skeleton } from "../ui/Skeleton";
@@ -12,7 +12,11 @@ type State =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; error: string }
-  | { status: "success"; summary: { company: string; issue: string; severity: number }; related: ComplaintDisplay[] };
+  | {
+      status: "success";
+      summary: { company: string; issue: string; severity: number; tone: string; legalAdvice: string };
+      related: ComplaintDisplay[];
+    };
 
 export function AiContextModal({
   complaintId,
@@ -59,14 +63,14 @@ export function AiContextModal({
             <div className="min-w-0">
               <Dialog.Title className="flex items-center gap-2 text-base font-semibold leading-6 tracking-tight text-zinc-100">
                 <Sparkles className="h-4 w-4 text-emerald-300/90" aria-hidden />
-                <span>AI Insights</span>
+                <span>Contexto (IA)</span>
               </Dialog.Title>
               <Dialog.Description className="mt-1 text-sm leading-6 text-zinc-400">
                 Contexto + denúncias relacionadas
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl">
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl" aria-label="Fechar">
                 <X className="h-4 w-4" aria-hidden />
               </Button>
             </Dialog.Close>
@@ -123,6 +127,23 @@ export function AiContextModal({
                     <div className="mt-1 text-sm font-semibold tracking-tight text-zinc-100 tabular-nums">
                       {state.summary.severity}/10
                     </div>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-2xl bg-zinc-950/25 p-3 ring-1 ring-inset ring-zinc-800/70">
+                    <div className="flex items-center gap-2 text-xs font-medium tracking-tight text-zinc-400">
+                      <Sparkles className="h-4 w-4 text-emerald-300/80" aria-hidden />
+                      <span>Tom da denúncia</span>
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-zinc-100">{state.summary.tone}</div>
+                  </div>
+                  <div className="rounded-2xl bg-zinc-950/25 p-3 ring-1 ring-inset ring-zinc-800/70">
+                    <div className="flex items-center gap-2 text-xs font-medium tracking-tight text-zinc-400">
+                      <Lock className="h-4 w-4 text-emerald-300/80" aria-hidden />
+                      <span>Conselho legal (informativo)</span>
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-sm leading-6 text-zinc-100">{state.summary.legalAdvice}</div>
                   </div>
                 </div>
 

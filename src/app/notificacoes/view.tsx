@@ -1,11 +1,13 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
 import { cn } from "../../lib/utils";
+import { getPusherClient } from "../../lib/realtime/pusher-client";
+import { privateUserChannel } from "../../lib/realtime/pusher-channels";
 
 export interface NotificationItem {
   id: string;
@@ -19,6 +21,46 @@ export interface NotificationItem {
 export function NotificacoesView({ notifications }: { notifications: NotificationItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const subscribedChannelRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const pusher = getPusherClient();
+    if (!pusher) return;
+
+    void (async () => {
+      const meRes = await fetch("/api/v1/auth/me", { credentials: "include" });
+      if (!meRes.ok || cancelled) return;
+      const me = await meRes.json().catch(() => null);
+      const userId = String(me?.data?.id ?? me?.data?.userId ?? "").trim();
+      if (!userId || cancelled) return;
+      const name = privateUserChannel(userId);
+      if (cancelled) return;
+      subscribedChannelRef.current = name;
+      const channel = pusher.subscribe(name);
+      if (cancelled) {
+        channel.unbind_all();
+        pusher.unsubscribe(name);
+        subscribedChannelRef.current = null;
+        return;
+      }
+      channel.bind("inbox:new-message", () => {
+        toast.message("Nova mensagem na caixa de entrada");
+        router.refresh();
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+      const name = subscribedChannelRef.current;
+      subscribedChannelRef.current = null;
+      const client = getPusherClient();
+      if (!client || !name) return;
+      const ch = client.channel(name);
+      ch?.unbind_all();
+      client.unsubscribe(name);
+    };
+  }, [router]);
 
   function handleMarkAsRead(id: string) {
     startTransition(async () => {
@@ -61,8 +103,8 @@ export function NotificacoesView({ notifications }: { notifications: Notificatio
                 className={cn(
                   "flex items-start gap-3 rounded-2xl border px-4 py-3",
                   n.isRead
-                    ? "border-zinc-800/70 bg-zinc-950/25"
-                    : "border-emerald-500/40 bg-zinc-950/40"
+                    ? "border-zinc-200/90 bg-white/80 dark:border-zinc-800/70 dark:bg-zinc-950/25"
+                    : "border-emerald-400/50 bg-emerald-50/60 dark:border-emerald-500/40 dark:bg-zinc-950/40"
                 )}
               >
                 <div className="mt-1">
@@ -74,12 +116,12 @@ export function NotificacoesView({ notifications }: { notifications: Notificatio
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold tracking-tight text-zinc-100">
+                    <p className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                       {n.title}
                     </p>
-                    <span className="text-xs text-zinc-500 tabular-nums">{timeLabel}</span>
+                    <span className="text-xs text-zinc-500 tabular-nums dark:text-zinc-500">{timeLabel}</span>
                   </div>
-                  <p className="text-sm leading-6 text-zinc-300">{n.message}</p>
+                  <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-300">{n.message}</p>
                 </div>
                 {!n.isRead && (
                   <div className="ml-2 flex items-center">

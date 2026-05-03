@@ -1,40 +1,37 @@
-import { z } from "zod";
 import * as complaintService from "../../../../lib/complaintService";
 import { getApiSession } from "../../../../lib/api/auth";
 import { jsonData, jsonError, parsePagination } from "../../../../lib/api/http";
-
-const createSchema = z.object({
-  content: z.string(),
-  tags: z.array(z.string()).optional(),
-  ghost_mode: z.boolean().optional(),
-  location_city: z.string().optional(),
-  location_lat: z.number().optional(),
-  location_lng: z.number().optional(),
-});
+import { complaintCreateLimiter, getClientIp, rateLimitOrNull } from "../../../../lib/rate-limit";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const { page, limit, offset } = parsePagination(url.searchParams);
-  const complaints = await complaintService.getFeed({ limit, offset });
+  const company = String(url.searchParams.get("company") ?? "").trim();
+  const topic = String(url.searchParams.get("topic") ?? "").trim().toLowerCase();
+  const complaints = await complaintService.getFeed({
+    limit,
+    offset,
+    companyId: company || undefined,
+    topic_slug: topic || undefined,
+  });
   const hasMore = complaints.length === limit;
   return jsonData(complaints, undefined, { page, limit, hasMore });
 }
 
 export async function POST(request: Request) {
+  const rateLimited = await rateLimitOrNull(complaintCreateLimiter, getClientIp(request), "complaintCreate");
+  if (rateLimited) return rateLimited;
+
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return jsonError("bad_request", "Invalid JSON body", 400);
   }
-  const parsed = createSchema.safeParse(body);
-  if (!parsed.success) {
-    return jsonError("validation_error", "Invalid payload", 400, parsed.error.flatten());
-  }
   const session = await getApiSession(request);
-  const result = await complaintService.createComplaint(parsed.data, session?.userId ?? null);
+  const result = await complaintService.createComplaint(body, session?.userId ?? null);
   if (!result.success) {
-    return jsonError("create_failed", result.error, 400);
+    return jsonError("create_failed", result.error, 400, result.details);
   }
   return jsonData(
     {
@@ -44,4 +41,3 @@ export async function POST(request: Request) {
     { status: 201 }
   );
 }
-

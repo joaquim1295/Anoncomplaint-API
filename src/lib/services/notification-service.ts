@@ -2,6 +2,27 @@ import * as userRepository from "../repositories/userRepository";
 import * as notificationRepository from "../repositories/notification-repository";
 import { sendComplaintUpdateEmail } from "./email-service";
 
+export async function notifyTopicNewComplaint(params: {
+  topicSlug: string;
+  topicTitle: string;
+  complaintId: string;
+  complaintTitle?: string | null;
+  excludeUserId?: string | null;
+}) {
+  const followers = await userRepository.findUsersFollowingTopic(params.topicSlug);
+  const titleShort = (params.complaintTitle ?? "Nova denúncia").slice(0, 80);
+  const recipients = followers.filter((u) => String(u._id) !== (params.excludeUserId ?? ""));
+  if (!recipients.length) return;
+  await notificationRepository.createMany(
+    recipients.map((user) => ({
+      userId: String(user._id),
+      title: `/${params.topicSlug}`,
+      message: `Novo no tópico «${params.topicTitle}»: ${titleShort}`,
+      complaintId: params.complaintId,
+    }))
+  );
+}
+
 export async function notifyComplaintUpdate(params: {
   complaintId: string;
   status: string;
@@ -14,20 +35,20 @@ export async function notifyComplaintUpdate(params: {
   const message =
     params.message ?? `O estado da denúncia foi atualizado para: ${params.status}.`;
   await Promise.all(
-    subscribers.map(async (user) => {
-      await Promise.all([
-        sendComplaintUpdateEmail({
-          to: user.email,
-          complaintId: params.complaintId,
-          status: params.status,
-        }),
-        notificationRepository.create({
-          userId: String(user._id),
-          title,
-          message,
-          complaintId: params.complaintId,
-        }),
-      ]);
-    })
+    subscribers.map((user) =>
+      sendComplaintUpdateEmail({
+        to: user.email,
+        complaintId: params.complaintId,
+        status: params.status,
+      })
+    )
+  );
+  await notificationRepository.createMany(
+    subscribers.map((user) => ({
+      userId: String(user._id),
+      title,
+      message,
+      complaintId: params.complaintId,
+    }))
   );
 }

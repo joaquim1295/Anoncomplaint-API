@@ -44,10 +44,10 @@ describe("verifyPassword", () => {
 });
 
 describe("verifyJWT", () => {
-  it("returns userId for valid token", async () => {
-    const token = await authService.generateJWT("507f1f77bcf86cd799439011");
+  it("returns userId and role for valid token", async () => {
+    const token = await authService.generateJWT("507f1f77bcf86cd799439011", "user");
     const result = await authService.verifyJWT(token);
-    expect(result).toEqual({ userId: "507f1f77bcf86cd799439011" });
+    expect(result).toEqual({ userId: "507f1f77bcf86cd799439011", role: "user" });
   });
 
   it("returns null for invalid token", async () => {
@@ -85,7 +85,15 @@ describe("register", () => {
   it("returns success and user when registration succeeds", async () => {
     userRepository.findByEmailOrUsername.mockResolvedValue(null);
     userRepository.findByUsername.mockResolvedValue(null);
-    userRepository.create.mockResolvedValue({ ...mockUser, _id: "newid" });
+    userRepository.create.mockImplementation(
+      async (data: {
+        email: string;
+        username?: string;
+        password_hash: string;
+        salt: string;
+        role?: import("../types/user").UserRole;
+      }) => ({ ...mockUser, ...data, _id: "newid" })
+    );
     const result = await authService.register({
       email: "new@t.com",
       username: "newuser",

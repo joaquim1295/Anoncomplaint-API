@@ -1,8 +1,21 @@
-import Link from "next/link";
-import { ArrowLeft, MapPinned } from "lucide-react";
+import type { Metadata } from "next";
+import { MapPinned, TrendingUp } from "lucide-react";
+import { PageHeader } from "../../components/layout/PageHeader";
 import * as complaintRepository from "../../lib/repositories/complaintRepository";
 import { ComplaintStatus } from "../../types/complaint";
-import { RageMap, type RageMapPoint } from "../../components/complaints/RageMap";
+import { RageMapNoSSR } from "../../components/complaints/RageMapNoSSR";
+import type { RageMapPoint } from "../../components/complaints/RageMap";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
+import * as analyticsService from "../../lib/services/analytics";
+import { getI18n } from "../../lib/i18n/request";
+import { getMessage } from "../../lib/i18n/dict";
+
+export const revalidate = 120;
+
+export const metadata: Metadata = {
+  title: "Radar de transparência",
+  description: "Mapa de denúncias e rankings de empresas.",
+};
 
 function intensityForStatus(status: string): number {
   if (status === ComplaintStatus.PENDING_REVIEW) return 1.0;
@@ -13,7 +26,12 @@ function intensityForStatus(status: string): number {
 }
 
 export default async function MapaPage() {
-  const docs = await complaintRepository.findAll();
+  const { messages } = await getI18n();
+  const tr = (key: string) => getMessage(messages, key);
+  const [docs, leaderboards] = await Promise.all([
+    complaintRepository.findAll({ limit: 3000 }),
+    analyticsService.getLeaderboards(),
+  ]);
   const points: RageMapPoint[] = docs
     .filter((c) => c.location && typeof c.location.lat === "number" && typeof c.location.lng === "number")
     .map((c) => ({
@@ -27,21 +45,51 @@ export default async function MapaPage() {
   return (
     <div className="min-h-screen px-4 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/70 pb-5">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium tracking-tight text-zinc-200 ring-cyber transition hover:bg-zinc-900/45 hover:text-zinc-100"
-          >
-            <ArrowLeft className="h-4 w-4 text-red-300/90" aria-hidden />
-            <span>AnonComplaint</span>
-          </Link>
-          <h1 className="inline-flex items-center gap-2 text-base font-semibold tracking-tight text-zinc-100">
-            <MapPinned className="h-4 w-4 text-red-300/90" aria-hidden />
-            <span>Mapa</span>
-          </h1>
-        </header>
+        <PageHeader title={tr("mapa.title")} iconName="mapPinned" />
 
-        <RageMap points={points} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="lg:col-span-2">
+            <RageMapNoSSR points={points} className="h-[45vh]" />
+          </div>
+          <Card className="bg-zinc-950/40 ring-zinc-800/80">
+            <CardHeader>
+              <CardTitle className="inline-flex items-center gap-2 text-zinc-100">
+                <TrendingUp className="h-4 w-4 text-emerald-300" />
+                {tr("mapa.topAgility")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                {leaderboards.fastest.map((item, idx) => (
+                  <li key={`${item.companyId}-${idx}`} className="flex items-center justify-between gap-2">
+                    <span className="text-zinc-200">{item.companyName}</span>
+                    <span className="tabular-nums text-emerald-300">
+                      {tr("mapa.respondsIn")} {item.avgHours.toFixed(1)}h
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+          <Card className="bg-zinc-950/40 ring-zinc-800/80">
+            <CardHeader>
+              <CardTitle className="inline-flex items-center gap-2 text-zinc-100">
+                <TrendingUp className="h-4 w-4 text-emerald-300" />
+                {tr("mapa.topApproval")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm">
+                {leaderboards.approval.map((item, idx) => (
+                  <li key={`${item.companyId}-${idx}`} className="flex items-center justify-between gap-2">
+                    <span className="text-zinc-200">{item.companyName}</span>
+                    <span className="tabular-nums text-emerald-300">{item.approvalRate.toFixed(1)}%</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

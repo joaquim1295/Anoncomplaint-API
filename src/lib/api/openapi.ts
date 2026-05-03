@@ -2,9 +2,9 @@ export function getOpenApiSpec() {
   return {
     openapi: "3.0.3",
     info: {
-      title: "AnonComplaint API",
+      title: "SmartComplaint API",
       version: "1.0.0",
-      description: "REST API for AnonComplaint platform",
+      description: "REST API for SmartComplaint platform",
     },
     servers: [
       { url: "/api/v1", description: "Current deployment" },
@@ -16,6 +16,8 @@ export function getOpenApiSpec() {
       { name: "Company", description: "Company dashboard endpoints" },
       { name: "Admin", description: "Administration endpoints" },
       { name: "Notifications", description: "Notification endpoints" },
+      { name: "Inbox", description: "Direct messages between users and companies" },
+      { name: "Media", description: "Image upload (Cloudinary)" },
     ],
     components: {
       securitySchemes: {
@@ -53,9 +55,14 @@ export function getOpenApiSpec() {
           type: "object",
           properties: {
             status: { type: "string", example: "ok" },
-            service: { type: "string", example: "anon-complaint-api" },
+            service: { type: "string", example: "smart-complaint-api" },
             version: { type: "string", example: "v1" },
             now: { type: "string", format: "date-time" },
+            checks: {
+              type: "object",
+              properties: { mongodb: { type: "boolean" } },
+            },
+            pusher_configured: { type: "boolean" },
           },
           required: ["status", "service", "version", "now"],
         },
@@ -80,6 +87,8 @@ export function getOpenApiSpec() {
         ComplaintCreateRequest: {
           type: "object",
           properties: {
+            title: { type: "string", maxLength: 100 },
+            company_id: { type: "string" },
             content: { type: "string" },
             tags: { type: "array", items: { type: "string" } },
             ghost_mode: { type: "boolean" },
@@ -87,7 +96,7 @@ export function getOpenApiSpec() {
             location_lat: { type: "number" },
             location_lng: { type: "number" },
           },
-          required: ["content"],
+          required: ["title", "content"],
         },
         ComplaintStatusUpdateRequest: {
           type: "object",
@@ -99,14 +108,40 @@ export function getOpenApiSpec() {
         OfficialResponseRequest: {
           type: "object",
           properties: {
+            companyId: { type: "string" },
             content: { type: "string", minLength: 10, maxLength: 2000 },
           },
+          required: ["companyId", "content"],
+        },
+        OfficialResponseReplyRequest: {
+          type: "object",
+          properties: {
+            content: { type: "string", minLength: 2, maxLength: 1500 },
+            parentReplyId: { type: "string" },
+          },
           required: ["content"],
+        },
+        CompanyVerificationRequestRow: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            userId: { type: "string" },
+            email: { type: "string", format: "email" },
+            companyName: { type: "string" },
+            companyWebsite: { type: "string" },
+            contactName: { type: "string" },
+            status: { type: "string", enum: ["pending", "email_verified", "approved", "rejected"] },
+            expiresAt: { type: "string", format: "date-time" },
+            emailVerifiedAt: { type: "string", format: "date-time", nullable: true },
+            created_at: { type: "string", format: "date-time" },
+          },
+          required: ["id", "userId", "email", "companyName", "companyWebsite", "contactName", "status", "expiresAt", "created_at"],
         },
         CompanyPayload: {
           type: "object",
           properties: {
             name: { type: "string" },
+            taxId: { type: "string" },
             website: { type: "string" },
             description: { type: "string" },
           },
@@ -129,9 +164,11 @@ export function getOpenApiSpec() {
         UpdateRoleRequest: {
           type: "object",
           properties: {
-            role: { type: "string", enum: ["company"] },
+            company_name: { type: "string" },
+            company_website: { type: "string" },
+            company_contact_name: { type: "string" },
           },
-          required: ["role"],
+          required: ["company_name", "company_website", "company_contact_name"],
         },
       },
     },
@@ -248,6 +285,36 @@ export function getOpenApiSpec() {
           responses: {
             "201": { description: "Complaint created" },
             "400": { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "429": { description: "Rate limit exceeded", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          },
+        },
+      },
+      "/upload/image": {
+        post: {
+          tags: ["Media"],
+          summary: "Upload image (data URI) to Cloudinary",
+          description: "Requires CLOUDINARY_* env. Rate limited per IP. Use folder `profiles` only when authenticated.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    image: { type: "string", description: "data:image/...;base64,..." },
+                    folder: { type: "string", enum: ["complaints", "profiles"], default: "complaints" },
+                  },
+                  required: ["image"],
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Returns { data: { url } }" },
+            "400": { description: "Invalid image or upload error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "401": { description: "Unauthorized (profiles folder)", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "429": { description: "Rate limit", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "503": { description: "Cloudinary not configured", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
           },
         },
       },
@@ -331,6 +398,41 @@ export function getOpenApiSpec() {
           },
         },
       },
+      "/complaints/{id}/ai-summary": {
+        post: {
+          tags: ["Complaints"],
+          summary: "Generate AI summary (ai_summary)",
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "AI summary generated" },
+            "404": { description: "Denúncia não encontrada" },
+          },
+        },
+      },
+      "/complaints/{id}/responses/{responseId}/replies": {
+        post: {
+          tags: ["Complaints"],
+          summary: "Create reply/triplica to an official response",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { in: "path", name: "id", required: true, schema: { type: "string" } },
+            { in: "path", name: "responseId", required: true, schema: { type: "string" } },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OfficialResponseReplyRequest" },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Reply created" },
+            "400": { description: "Operation failed", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "401": { description: "Unauthorized" },
+          },
+        },
+      },
       "/stats": {
         get: {
           tags: ["Complaints"],
@@ -388,6 +490,20 @@ export function getOpenApiSpec() {
           responses: { "200": { description: "Response added" }, "400": { description: "Failed" } },
         },
       },
+      "/company/verification/confirm": {
+        get: {
+          tags: ["Company"],
+          summary: "Confirm company verification email token",
+          parameters: [
+            { in: "query", name: "token", required: true, schema: { type: "string" } },
+          ],
+          responses: {
+            "200": { description: "Token confirmed" },
+            "400": { description: "Invalid or expired token", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "404": { description: "Request not found" },
+          },
+        },
+      },
       "/company/companies": {
         get: {
           tags: ["Company"],
@@ -428,10 +544,62 @@ export function getOpenApiSpec() {
         },
         delete: {
           tags: ["Company"],
-          summary: "Delete company",
+          summary: "Delete company (owner or admin)",
           security: [{ bearerAuth: [] }],
           parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
           responses: { "200": { description: "Company deleted" }, "404": { description: "Not found" } },
+        },
+      },
+      "/admin/god-mode/force-approve": {
+        post: {
+          tags: ["Admin"],
+          summary: "God mode: force approve current admin as company",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            "200": { description: "Current user promoted to company" },
+            "403": { description: "Forbidden" },
+          },
+        },
+      },
+      "/admin/god-mode/simulate-response": {
+        post: {
+          tags: ["Admin"],
+          summary: "God mode: trigger simulated realtime response",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            "200": { description: "Realtime event dispatched" },
+            "403": { description: "Forbidden" },
+          },
+        },
+      },
+      "/admin/god-mode/reset-demo": {
+        post: {
+          tags: ["Admin"],
+          summary: "God mode: reset demo complaint data",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            "200": { description: "Demo data reset" },
+            "403": { description: "Forbidden" },
+          },
+        },
+      },
+      "/company/public/{slug}/view": {
+        post: {
+          tags: ["Company"],
+          summary: "Increment company profile views",
+          parameters: [{ in: "path", name: "slug", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "View count incremented" },
+            "404": { description: "Company not found" },
+          },
+        },
+      },
+      "/company/public/search": {
+        get: {
+          tags: ["Company"],
+          summary: "Search public companies by name",
+          parameters: [{ in: "query", name: "q", required: true, schema: { type: "string" } }],
+          responses: { "200": { description: "Company suggestions" } },
         },
       },
       "/admin/users": {
@@ -468,6 +636,58 @@ export function getOpenApiSpec() {
           responses: { "200": { description: "Complaint deleted" }, "404": { description: "Not found" } },
         },
       },
+      "/admin/company-requests": {
+        get: {
+          tags: ["Admin"],
+          summary: "List company verification requests",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            "200": {
+              description: "Requests list",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      data: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/CompanyVerificationRequestRow" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "403": { description: "Forbidden" },
+          },
+        },
+      },
+      "/admin/company-requests/{id}/approve": {
+        post: {
+          tags: ["Admin"],
+          summary: "Approve company verification request",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "Request approved" },
+            "400": { description: "Approve failed", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "403": { description: "Forbidden" },
+          },
+        },
+      },
+      "/admin/company-requests/{id}/reject": {
+        post: {
+          tags: ["Admin"],
+          summary: "Reject company verification request",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "Request rejected" },
+            "400": { description: "Reject failed", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "403": { description: "Forbidden" },
+          },
+        },
+      },
       "/notifications": {
         get: {
           tags: ["Notifications"],
@@ -487,6 +707,87 @@ export function getOpenApiSpec() {
           security: [{ bearerAuth: [] }],
           parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
           responses: { "200": { description: "Notification updated" }, "404": { description: "Not found" } },
+        },
+      },
+      "/inbox/conversations": {
+        get: {
+          tags: ["Inbox"],
+          summary: "List inbox conversations for current actor",
+          security: [{ bearerAuth: [] }],
+          responses: { "200": { description: "Conversation list" }, "401": { description: "Unauthorized" } },
+        },
+        post: {
+          tags: ["Inbox"],
+          summary: "Create or get a conversation",
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    companyId: { type: "string" },
+                    userId: { type: "string" },
+                    message: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Conversation created or reused" },
+            "400": { description: "Invalid payload", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          },
+        },
+      },
+      "/inbox/conversations/{id}/messages": {
+        get: {
+          tags: ["Inbox"],
+          summary: "List messages from a conversation",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "Message list" },
+            "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "404": { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          },
+        },
+        post: {
+          tags: ["Inbox"],
+          summary: "Send message to a conversation",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { content: { type: "string" } },
+                  required: ["content"],
+                },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Message sent" },
+            "400": { description: "Validation error", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          },
+        },
+      },
+      "/inbox/conversations/{id}/read": {
+        patch: {
+          tags: ["Inbox"],
+          summary: "Mark conversation messages as read for current actor",
+          security: [{ bearerAuth: [] }],
+          parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          responses: {
+            "200": { description: "Marked read" },
+            "403": { description: "Forbidden", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "404": { description: "Not found", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          },
         },
       },
       "/subscriptions/{complaintId}/toggle": {
@@ -544,6 +845,16 @@ export function getOpenApiSpec() {
             },
           },
           responses: { "200": { description: "Role updated" }, "400": { description: "Validation failed" } },
+        },
+        delete: {
+          tags: ["Auth"],
+          summary: "Deactivate company role for current user",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            "200": { description: "Role deactivated to user" },
+            "400": { description: "Deactivate failed", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            "401": { description: "Unauthorized" },
+          },
         },
       },
       "/ai/context/{complaintId}": {

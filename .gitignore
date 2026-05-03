@@ -4,6 +4,7 @@ mobile/node_modules/
 
 # build outputs
 .next/
+.next/cache/
 out/
 dist/
 build/

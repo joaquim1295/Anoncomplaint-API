@@ -1,4 +1,5 @@
 import * as complaintService from "../lib/complaintService";
+import type { ComplaintDocument } from "../models/Complaint";
 import { ComplaintStatus } from "../types/complaint";
 
 jest.mock("../lib/repositories/complaintRepository", () => ({
@@ -10,39 +11,55 @@ jest.mock("../lib/repositories/complaintRepository", () => ({
   aggregate: jest.fn(),
 }));
 
+jest.mock("../lib/services/notification-service", () => ({
+  notifyComplaintUpdate: jest.fn().mockResolvedValue(undefined),
+  notifyTopicNewComplaint: jest.fn().mockResolvedValue(undefined),
+}));
+
 const complaintRepository = require("../lib/repositories/complaintRepository");
 
 const mockDoc = {
   _id: "507f1f77bcf86cd799439011",
   author_id: "user123",
+  ghost_mode: true,
+  title: "Test title",
   content: "Test complaint content here",
   tags: ["tag1", "tag2"],
   status: ComplaintStatus.PENDING,
   created_at: new Date("2025-01-15T12:00:00Z"),
   updated_at: new Date("2025-01-15T12:00:00Z"),
-};
+  endorsedBy: [] as string[],
+} as unknown as ComplaintDocument;
 
 describe("createComplaint", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("sets author_id to null when ghost_mode true", async () => {
+  it("keeps author_id when ghost_mode true (label masked in UI)", async () => {
     complaintRepository.create.mockResolvedValue(mockDoc);
     const result = await complaintService.createComplaint(
-      { content: "A".repeat(10), tags: [], ghost_mode: true },
+      { title: "Test title", content: "A".repeat(10), tags: [], ghost_mode: true },
       "user123"
     );
     expect(result.success).toBe(true);
     expect(complaintRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ author_id: null, content: "A".repeat(10), tags: [] })
+      expect.objectContaining({
+        author_id: "user123",
+        ghost_mode: true,
+        title: "Test title",
+        content: "A".repeat(10),
+        tags: [],
+        topic_slug: null,
+        topic_title: null,
+      })
     );
   });
 
   it("sets author_id to userId when ghost_mode false", async () => {
     complaintRepository.create.mockResolvedValue(mockDoc);
     const result = await complaintService.createComplaint(
-      { content: "A".repeat(10), tags: [], ghost_mode: false },
+      { title: "Test title", content: "A".repeat(10), tags: [], ghost_mode: false },
       "user123"
     );
     expect(result.success).toBe(true);
@@ -53,7 +70,7 @@ describe("createComplaint", () => {
 
   it("rejects invalid input", async () => {
     const result = await complaintService.createComplaint(
-      { content: "short", tags: [], ghost_mode: true },
+      { content: "short", tags: [], ghost_mode: true, title: "T" },
       null
     );
     expect(result.success).toBe(false);
@@ -76,13 +93,13 @@ describe("formatFeed and toDisplay", () => {
   });
 
   it("author_label is Anónimo even when author_id is set", () => {
-    const withAuthor = { ...mockDoc, author_id: "user123" };
+    const withAuthor = { ...mockDoc, author_id: "user123" } as unknown as ComplaintDocument;
     const displayed = complaintService.formatFeed([withAuthor]);
     expect(displayed[0].author_label).toBe("Anónimo");
   });
 
   it("handles doc with null tags", () => {
-    const noTags = { ...mockDoc, tags: undefined };
+    const noTags = { ...mockDoc, tags: undefined } as unknown as ComplaintDocument;
     const displayed = complaintService.formatFeed([noTags]);
     expect(displayed[0].tags).toEqual([]);
   });

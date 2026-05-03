@@ -18,7 +18,7 @@ export async function GET(request: Request) {
       tags: c.tags ?? [],
       created_at: c.created_at,
       updated_at: c.updated_at,
-      officialResponse: c.officialResponse ?? null,
+      officialResponses: c.officialResponses ?? [],
     }))
   );
 }

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "../../lib/getUser";
+import { getResolvedAccountMode } from "../../lib/accountMode";
 import { UserRole } from "../../types/user";
 
 export default async function AdminLayout({
@@ -7,7 +7,8 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await getCurrentUser();
-  if (!user || user.role !== UserRole.ADMIN) redirect("/");
+  const ctx = await getResolvedAccountMode();
+  if (!ctx.user || ctx.user.role !== UserRole.ADMIN) redirect("/");
+  if (ctx.mode === "company") redirect("/");
   return <>{children}</>;
 }

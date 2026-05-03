@@ -17,6 +17,24 @@ export function jsonData<T>(
   );
 }
 
+/** Cache-Control para respostas só de leitura sem dados de sessão (CDN / edge). */
+export function jsonDataCached<T>(
+  data: T,
+  cache: { sMaxAge: number; swr?: number },
+  init?: ResponseInit,
+  meta?: Record<string, unknown>
+): Response {
+  const swr = cache.swr ?? cache.sMaxAge;
+  const cc = `public, s-maxage=${cache.sMaxAge}, stale-while-revalidate=${swr}`;
+  const baseHeaders = new Headers(init?.headers ?? undefined);
+  baseHeaders.set("Cache-Control", cc);
+  return Response.json(meta ? { data, meta } : { data }, {
+    status: 200,
+    ...init,
+    headers: baseHeaders,
+  });
+}
+
 export function jsonError(
   code: string,
   message: string,

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "AnonComplaint Mobile",
-    "slug": "anon-complaint-mobile",
+    "name": "SmartComplaint Mobile",
+    "slug": "smart-complaint-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
@@ -13,7 +13,7 @@
       "**/*"
     ],
     "android": {
-      "package": "com.anoncomplaint.mobile"
+      "package": "com.smartcomplaint.mobile"
     }
   }
 }

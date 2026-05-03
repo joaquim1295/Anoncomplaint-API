@@ -1,4 +1,4 @@
-# AnonComplaint Mobile (Android)
+# SmartComplaint Mobile (Android)
 
 Frontend mobile em React Native (Expo) consumindo a API REST do projeto.
 
