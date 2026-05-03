@@ -82,7 +82,7 @@ export function PageHeader({
 
   return (
     <header
-      className={`flex flex-wrap items-center justify-between gap-4 ${sticky} ${underline}`}
+      className={`flex min-w-0 w-full flex-wrap items-center justify-between gap-4 ${sticky} ${underline}`}
     >
       <Link
         href={backHref}
@@ -91,9 +91,9 @@ export function PageHeader({
         <ArrowLeft className={`h-4 w-4 ${accent}`} aria-hidden />
         <span>{backLabel}</span>
       </Link>
-      <h1 className="inline-flex items-center gap-2 text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
-        {Icon ? <Icon className={`h-4 w-4 ${accent}`} aria-hidden /> : null}
-        <span>{title}</span>
+      <h1 className="inline-flex min-w-0 max-w-full items-center gap-2 text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+        {Icon ? <Icon className={`h-4 w-4 shrink-0 ${accent}`} aria-hidden /> : null}
+        <span className="min-w-0 truncate">{title}</span>
       </h1>
     </header>
   );

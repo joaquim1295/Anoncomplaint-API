@@ -25,7 +25,7 @@ export function UserNav({ userId, userEmail }: UserNavProps) {
 
   if (!userId) {
     return (
-      <nav className="flex items-center gap-2">
+      <nav className="flex shrink-0 flex-wrap items-center gap-2">
         <Link href="/login">
           <Button variant="ghost" size="sm">
             <LogIn className="h-4 w-4 text-emerald-700 dark:text-emerald-300/90" aria-hidden />
@@ -43,7 +43,7 @@ export function UserNav({ userId, userEmail }: UserNavProps) {
   }
 
   return (
-    <nav className="relative flex items-center gap-2">
+    <nav className="relative flex shrink-0 flex-wrap items-center justify-end gap-2">
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
           <Button
@@ -56,7 +56,7 @@ export function UserNav({ userId, userEmail }: UserNavProps) {
             <UserCircle2 className="h-5 w-5 text-emerald-700 dark:text-emerald-300/90" aria-hidden />
             {userEmail && (
               <span
-                className="max-w-[140px] truncate text-sm font-medium tracking-tight text-zinc-800 dark:text-zinc-200"
+                className="max-w-[min(140px,42vw)] truncate text-sm font-medium tracking-tight text-zinc-800 dark:text-zinc-200"
                 title={userEmail}
               >
                 {userEmail}

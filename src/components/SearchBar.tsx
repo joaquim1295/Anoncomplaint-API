@@ -48,7 +48,7 @@ export function SearchBar({
   );
 
   return (
-    <div className={cn("relative w-full max-w-sm", className)}>
+    <div className={cn("relative w-full min-w-0 max-w-full sm:max-w-sm", className)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-700/80 dark:text-emerald-300/80" aria-hidden />
       <Input
         type="search"

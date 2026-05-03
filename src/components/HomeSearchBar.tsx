@@ -38,9 +38,10 @@ export function HomeSearchBar() {
   }, [urlCompanyName]);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex min-w-0 w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
       <SearchBar
         key={urlQ}
+        className="min-w-0 flex-1 sm:max-w-none"
         defaultValue={urlQ}
         placeholder={t("search.homeComplaintsPlaceholder")}
         debounceMs={500}
@@ -55,7 +56,7 @@ export function HomeSearchBar() {
           router.replace(query ? `/?${query}` : "/");
         }}
       />
-      <div className="relative">
+      <div className="relative min-w-0 w-full sm:w-auto sm:shrink-0">
         <Input
           value={companyQuery}
           onChange={(e) => {
@@ -64,10 +65,10 @@ export function HomeSearchBar() {
           }}
           onFocus={() => setOpen(true)}
           placeholder={t("search.homeCompanyPlaceholder")}
-          className="w-48"
+          className="w-full min-w-0 sm:w-48"
         />
         {open && companySuggestions.length > 0 && (
-          <div className="absolute right-0 z-20 mt-1 max-h-48 w-64 overflow-auto rounded-xl border border-zinc-200/90 bg-white/95 p-1 shadow-lg backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/95 dark:shadow-none dark:ring-1 dark:ring-inset dark:ring-zinc-800/80">
+          <div className="absolute left-0 right-0 z-20 mt-1 max-h-48 min-w-0 overflow-auto rounded-xl border border-zinc-200/90 bg-white/95 p-1 shadow-lg backdrop-blur sm:left-auto sm:right-0 sm:w-64 dark:border-zinc-800/80 dark:bg-zinc-950/95 dark:shadow-none dark:ring-1 dark:ring-inset dark:ring-zinc-800/80">
             {companySuggestions.map((company) => (
               <button
                 key={company.id}
@@ -94,6 +95,7 @@ export function HomeSearchBar() {
           type="button"
           size="sm"
           variant="ghost"
+          className="shrink-0 self-start sm:self-center"
           onClick={() => {
             const params = new URLSearchParams(searchParams.toString());
             params.delete("company");

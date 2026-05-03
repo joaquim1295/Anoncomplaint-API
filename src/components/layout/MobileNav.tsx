@@ -64,7 +64,8 @@ export function MobileNav() {
   return (
     <div
       className={cn(
-        "fixed bottom-4 left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-zinc-200/90 bg-white/90 px-2 py-1.5 shadow-[0_12px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl md:hidden dark:border-zinc-800/90 dark:bg-zinc-950/85 dark:shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
+        "fixed left-1/2 z-40 flex max-w-[min(100vw-1rem,26rem)] -translate-x-1/2 items-center gap-1 rounded-2xl border border-zinc-200/90 bg-white/90 px-2 py-1.5 shadow-[0_12px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl md:hidden dark:border-zinc-800/90 dark:bg-zinc-950/85 dark:shadow-[0_12px_40px_rgba(0,0,0,0.45)]",
+        "bottom-[max(0.75rem,calc(env(safe-area-inset-bottom,0px)+0.5rem))]"
       )}
       role="navigation"
       aria-label={t("a11y.mobileNav")}

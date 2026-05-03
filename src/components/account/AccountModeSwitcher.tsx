@@ -37,7 +37,7 @@ export function AccountModeSwitcher({
 
   return (
     <div
-      className="inline-flex max-w-[220px] flex-1 rounded-xl border border-zinc-200/90 bg-zinc-50/90 p-0.5 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/50 sm:max-w-none"
+      className="inline-flex max-w-[min(220px,72vw)] shrink-0 rounded-xl border border-zinc-200/90 bg-zinc-50/90 p-0.5 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/50 sm:max-w-none"
       role="group"
       aria-label={t("accountMode.ariaGroup")}
     >

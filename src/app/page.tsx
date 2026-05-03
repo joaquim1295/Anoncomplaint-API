@@ -77,10 +77,10 @@ export default async function HomePage({ searchParams }: PageProps) {
   }));
 
   return (
-    <div className="min-h-screen px-4 py-8 md:px-8 md:py-10">
-      <div className="mx-auto max-w-6xl">
-        <div className="grid gap-8 pt-2 lg:grid-cols-3">
-          <main className="space-y-6 lg:col-span-2 lg:max-h-[calc(100vh-9.5rem)] lg:overflow-hidden">
+    <div className="min-h-screen w-full min-w-0 max-w-full px-3 py-6 sm:px-4 md:px-8 md:py-10">
+      <div className="mx-auto min-w-0 max-w-6xl">
+        <div className="grid min-w-0 gap-6 pt-2 md:gap-8 lg:grid-cols-3">
+          <main className="min-w-0 space-y-6 lg:col-span-2 lg:max-h-[calc(100vh-9.5rem)] lg:min-h-0 lg:overflow-y-auto lg:overflow-x-hidden lg:pr-1">
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
@@ -103,16 +103,16 @@ export default async function HomePage({ searchParams }: PageProps) {
                           ? "bg-amber-500/80"
                           : "bg-amber-500/50";
                       return (
-                    <li key={`${item.companyId}-${idx}`} className="flex items-center justify-between gap-2">
+                    <li key={`${item.companyId}-${idx}`} className="flex min-w-0 items-center justify-between gap-2">
                       <Link
                         href={empresaPublicHref(item)}
-                        className={`min-w-[140px] max-w-[min(200px,55vw)] truncate ${empresaNameLinkClass} text-zinc-800 dark:text-zinc-200`}
+                        className={`min-w-0 flex-1 truncate ${empresaNameLinkClass} text-zinc-800 dark:text-zinc-200`}
                       >
                         {item.companyName}
                       </Link>
-                      <span className="flex items-center gap-2">
+                      <span className="flex shrink-0 items-center gap-2">
                         <span className="hidden sm:inline text-xs tabular-nums text-red-600 dark:text-red-400">{item.count}</span>
-                        <span className="flex h-2 w-[110px] overflow-hidden rounded-full bg-zinc-200/90 ring-1 ring-inset ring-zinc-300/80 dark:bg-zinc-900/40 dark:ring-zinc-800/70" aria-hidden>
+                        <span className="flex h-2 w-[clamp(3.25rem,22vw,6.875rem)] overflow-hidden rounded-full bg-zinc-200/90 ring-1 ring-inset ring-zinc-300/80 dark:bg-zinc-900/40 dark:ring-zinc-800/70" aria-hidden>
                           <span className={`${barClass}`} style={{ width: `${Math.max(6, ratio * 100)}%` }} />
                         </span>
                       </span>
@@ -146,7 +146,7 @@ export default async function HomePage({ searchParams }: PageProps) {
             </Card>
           </section>
 
-          <section className="scrollbar-none lg:h-[calc(100%-13rem)] lg:overflow-y-auto">
+          <section className="min-w-0 scrollbar-none lg:h-[calc(100%-13rem)] lg:overflow-y-auto lg:overflow-x-hidden">
             <h2 className="mb-4 text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               {q ? `Resultados para "${q}"` : "Denúncias recentes"}
             </h2>
@@ -189,7 +189,7 @@ export default async function HomePage({ searchParams }: PageProps) {
             </div>
           </section>
           </main>
-          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <aside className="min-w-0 space-y-6 lg:sticky lg:top-24 lg:self-start">
             <Card>
               <CardHeader>
                 <CardTitle className="text-emerald-800 dark:text-emerald-200">{tr("home.companyStatsTitle")}</CardTitle>
