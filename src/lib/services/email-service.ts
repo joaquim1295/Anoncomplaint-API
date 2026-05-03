@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { render } from "@react-email/components";
+import { render } from "@react-email/render";
 import { ComplaintUpdateEmail } from "../../components/emails/ComplaintUpdateEmail";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
