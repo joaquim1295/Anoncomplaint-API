@@ -1,13 +1,20 @@
-# SmartComplaint
+<p align="center">
+  <img src="./public/smartcomplaint-banner.png" alt="SmartComplaint Banner" width="800" />
+</p>
 
-Plataforma web de **reclamações e denúncias** com feed público, respostas de empresas, estatísticas, salas de tópico (estilo Reddit), mensagens em tempo real e painéis para utilizador, empresa e administração.
+<p align="center">
+  Plataforma web de <strong>reclamações e denúncias</strong> com feed público, respostas de empresas, estatísticas, salas de tópico (estilo Reddit), mensagens em tempo real e painéis para utilizador, empresa e administração.
+</p>
 
-Stack principal: **Next.js 15** (App Router), **React 19**, **TypeScript**, **MongoDB** (Mongoose), **Tailwind CSS**, **Radix UI**.
+<p align="center">
+  Stack principal: <b>Next.js 15</b> (App Router), <b>React 19</b>, <b>TypeScript</b>, <b>MongoDB</b> (Mongoose), <b>Tailwind CSS</b>, <b>Radix UI</b>.
+</p>
 
 ---
 
 ## Conteúdo
 
+- [Conteúdo](#conteúdo)
 - [Funcionalidades](#funcionalidades)
 - [Requisitos](#requisitos)
 - [Arranque rápido](#arranque-rápido)
@@ -21,6 +28,7 @@ Stack principal: **Next.js 15** (App Router), **React 19**, **TypeScript**, **Mo
 - [Segurança e cabeçalhos HTTP](#segurança-e-cabeçalhos-http)
 - [CI (GitHub Actions)](#ci-github-actions)
 - [Resolução de problemas](#resolução-de-problemas)
+- [Licença e nome do pacote](#licença-e-nome-do-pacote)
 
 ---
 

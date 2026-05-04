@@ -1,0 +1,18 @@
+@startuml fluxograma2-dashboard-empresa
+title Fluxograma 2 - Feed agregado para dono de várias empresas
+
+start
+:Receber ownerUserId;
+:Listar empresas do dono;
+if (N > 0 empresas?) then (não)
+  :Devolver [];
+  stop
+endif
+:Para cada empresa E_i:\nconsultar denúncias recentes\n(findByCompanyId);
+:Unir resultados e remover\nduplicados por _id;
+:Ordenar globalmente\npor data de criação;
+:Aplicar limite total\n(ex.: 200);
+:formatFeed;
+stop
+
+@enduml

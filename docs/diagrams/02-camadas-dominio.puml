@@ -1,0 +1,42 @@
+@startuml diagrama2-camadas-dominio
+title Diagrama 2 - Camadas e responsabilidades (padrão em camadas)
+
+skinparam classAttributeIconSize 0
+left to right direction
+
+class "Route Handler\n(route.ts)" as RH {
+  Validação de entrada (Zod)
+  Auth (cookie / Bearer)
+  Resposta JSON padronizada
+}
+
+class "Serviço\n(ex.: complaintService)" as SVC {
+  Regras de negócio
+  Orquestração
+  Side-effects (email, Pusher)
+}
+
+class "Repositório\n(ex.: complaintRepository)" as REP {
+  Queries Mongoose
+  Agregações
+}
+
+class "Modelo Mongoose\n(ex.: Complaint)" as MOD {
+  Schema + tipos
+}
+
+RH --> SVC : invoca
+SVC --> REP : delega persistência
+REP --> MOD : usa
+
+note bottom of RH
+  Separação: HTTP fino,
+  sem lógica de domínio pesada
+end note
+
+note bottom of SVC
+  Ponto único para
+  invariantes e fluxos
+end note
+
+@enduml

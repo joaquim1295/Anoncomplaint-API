@@ -8,10 +8,13 @@ import { getMessage } from "../../lib/i18n/dict";
 import { PerfilView } from "./view";
 import * as companyService from "../../lib/companyService";
 
-export const metadata: Metadata = {
-  title: "O meu perfil",
-  description: "Definições da conta, empresas e preferências.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.profile.title"),
+    description: getMessage(messages, "meta.pages.profile.description"),
+  };
+}
 
 export default async function PerfilPage() {
   const user = await getCurrentUser();

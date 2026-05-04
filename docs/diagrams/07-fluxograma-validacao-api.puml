@@ -1,0 +1,27 @@
+@startuml fluxograma3-validacao-api
+title Fluxograma 3 - Cascata de validação e resposta (Route Handler típico)
+
+start
+:Extrair body / query / params;
+:Resolver sessão\n(cookie JWT / Authorization);
+if (Rota protegida?) then (sim)
+  if (sessão válida?) then (não)
+    :401 jsonError;
+    stop
+  endif
+endif
+:schema.safeParse(dados);
+if (sucesso?) then (não)
+  :400 + detalhes Zod\n(issues / fieldErrors);
+  stop
+endif
+:Chamar serviço de domínio;
+if (resultado.success?) then (sim)
+  :200/201 + payload;
+  stop
+else (não)
+  :4xx conforme regra\n(mensagem semântica);
+  stop
+endif
+
+@enduml

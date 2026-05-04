@@ -10,10 +10,13 @@ import { ComplaintItem } from "../../components/ComplaintItem";
 import { DeleteComplaintButton } from "../../components/complaints/DeleteComplaintButton";
 import { EditOwnComplaintButton } from "../../components/complaints/EditOwnComplaintButton";
 
-export const metadata: Metadata = {
-  title: "As minhas actividades",
-  description: "Denúncias e interações ligadas à sua conta.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.activities.title"),
+    description: getMessage(messages, "meta.pages.activities.description"),
+  };
+}
 
 export default async function ActivitiesPage() {
   const user = await getCurrentUser();

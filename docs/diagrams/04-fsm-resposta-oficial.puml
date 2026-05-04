@@ -1,0 +1,32 @@
+@startuml diagrama4-resposta-oficial
+title Diagrama 4 - Decisão: adicionar primeira resposta oficial
+
+start
+partition "Entrada" {
+  :Pedido autenticado\n(empresa + texto);
+}
+
+partition "Validações" {
+  if (Empresa existe e\nownerUserId coincide?) then (não)
+    :Recusar:\nsem permissão;
+    stop
+  endif
+  if (Denúncia cita empresa\n(Id, slug ou tags)?) then (não)
+    :Recusar:\nsem associação;
+    stop
+  endif
+  if (Já existe officialResponse\ncom mesmo companyId?) then (sim)
+    :Recusar:\nduplicado;
+    stop
+  endif
+}
+
+partition "Persistência" {
+  :complaintRepository\n.addOfficialResponse;
+  :Notificações + evento\nPusher (feeds);
+  :OK;
+}
+
+stop
+
+@enduml

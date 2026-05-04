@@ -8,10 +8,13 @@ import { getMessage } from "../../lib/i18n/dict";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Pesquisa avançada",
-  description: "Filtre denúncias por texto, empresa, estado e cidade.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.search.title"),
+    description: getMessage(messages, "meta.pages.search.description"),
+  };
+}
 
 type PageProps = {
   searchParams: Promise<{

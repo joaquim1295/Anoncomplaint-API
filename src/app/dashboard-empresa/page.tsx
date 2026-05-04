@@ -8,10 +8,13 @@ import * as complaintService from "../../lib/complaintService";
 import * as inboxService from "../../lib/services/inbox-service";
 import { DashboardEmpresaView } from "./view";
 
-export const metadata: Metadata = {
-  title: "Painel Empresa",
-  description: "Gestão de denúncias e mensagens como empresa.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.companyDashboard.title"),
+    description: getMessage(messages, "meta.pages.companyDashboard.description"),
+  };
+}
 
 export default async function DashboardEmpresaPage() {
   const ctx = await getResolvedAccountMode();

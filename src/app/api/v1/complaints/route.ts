@@ -8,11 +8,21 @@ export async function GET(request: Request) {
   const { page, limit, offset } = parsePagination(url.searchParams);
   const company = String(url.searchParams.get("company") ?? "").trim();
   const topic = String(url.searchParams.get("topic") ?? "").trim().toLowerCase();
+  const authorMe = String(url.searchParams.get("author") ?? "").trim().toLowerCase() === "me";
+  const session = await getApiSession(request);
+  const authorId =
+    authorMe && session ? session.userId : authorMe && !session ? "__unauthorized__" : undefined;
+
+  if (authorId === "__unauthorized__") {
+    return jsonError("unauthorized", "Authentication required", 401);
+  }
+
   const complaints = await complaintService.getFeed({
     limit,
     offset,
     companyId: company || undefined,
     topic_slug: topic || undefined,
+    authorId: authorId ?? undefined,
   });
   const hasMore = complaints.length === limit;
   return jsonData(complaints, undefined, { page, limit, hasMore });

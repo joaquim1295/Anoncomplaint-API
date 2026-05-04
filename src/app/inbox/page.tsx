@@ -8,10 +8,13 @@ import * as companyService from "../../lib/companyService";
 import * as inboxService from "../../lib/services/inbox-service";
 import { InboxView } from "./view";
 
-export const metadata: Metadata = {
-  title: "Caixa de entrada",
-  description: "Mensagens e conversas com empresas e moderadores.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.inbox.title"),
+    description: getMessage(messages, "meta.pages.inbox.description"),
+  };
+}
 
 export default async function InboxPage() {
   const ctx = await getResolvedAccountMode();

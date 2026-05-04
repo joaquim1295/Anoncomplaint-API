@@ -3,13 +3,18 @@ import * as complaintService from "../../lib/complaintService";
 import * as analyticsService from "../../lib/services/analytics";
 import { AnalyticsView } from "./view";
 import type { RageMapPoint } from "../../components/complaints/RageMap";
+import { getI18n } from "../../lib/i18n/request";
+import { getMessage } from "../../lib/i18n/dict";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Estatísticas",
-  description: "Tendências, mapa e métricas de denúncias e reputação.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.analytics.title"),
+    description: getMessage(messages, "meta.pages.analytics.description"),
+  };
+}
 
 export default async function AnalyticsPage() {
   const [trends, stats, feed, companyReputation] = await Promise.all([

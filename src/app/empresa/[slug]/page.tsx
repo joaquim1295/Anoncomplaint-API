@@ -4,19 +4,23 @@ import { getCurrentUser } from "../../../lib/getUser";
 import * as companyService from "../../../lib/companyService";
 import * as complaintService from "../../../lib/complaintService";
 import * as analyticsService from "../../../lib/services/analytics";
+import { getI18n } from "../../../lib/i18n/request";
+import { getMessage } from "../../../lib/i18n/dict";
 import { EmpresaView, type EmpresaTab } from "./view";
 
 export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
+  const [{ slug }, { messages }] = await Promise.all([params, getI18n()]);
+  const fbTitle = getMessage(messages, "meta.empresaPublic.fallbackTitle");
+  const descTpl = getMessage(messages, "meta.empresaPublic.descriptionTemplate");
   const company = await companyService.getBySlug(slug);
   if (!company) {
-    return { title: "Empresa" };
+    return { title: fbTitle };
   }
   return {
     title: company.name,
-    description: `Denúncias, respostas oficiais e reputação de ${company.name}.`,
+    description: descTpl.replace("{{name}}", company.name),
   };
 }
 

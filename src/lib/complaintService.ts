@@ -113,7 +113,6 @@ export async function createComplaint(
       }
     }
     const normalizedTags = [...(tags ?? [])];
-    if (companyId && !normalizedTags.includes(companyId)) normalizedTags.push(companyId);
 
     let topicSlugOut: string | null = null;
     let topicTitleOut: string | null = null;
@@ -178,6 +177,17 @@ export async function createComplaint(
           : undefined,
     };
   }
+}
+
+/** Tags só para indexação (ex.: ObjectId da empresa) não devem aparecer na UI — já existe `companyId`. */
+function tagsForPublicDisplay(tags: string[] | undefined, companyId: string | null | undefined): string[] {
+  return (tags ?? []).filter((t) => {
+    const s = String(t).trim();
+    if (!s) return false;
+    if (companyId && s === companyId) return false;
+    if (/^[a-f0-9]{24}$/i.test(s)) return false;
+    return true;
+  });
 }
 
 function toDisplay(doc: ComplaintDocument): ComplaintDisplay {
@@ -250,7 +260,7 @@ function toDisplay(doc: ComplaintDocument): ComplaintDisplay {
     content: doc.content,
     attachments: doc.attachments ?? [],
     ai_summary: doc.ai_summary ?? null,
-    tags: doc.tags ?? [],
+    tags: tagsForPublicDisplay(doc.tags, doc.companyId),
     topic_slug: doc.topic_slug ?? null,
     topic_title: doc.topic_title ?? null,
     status: doc.status,
@@ -369,6 +379,8 @@ export async function getFeed(options: {
   status?: ComplaintStatus;
   companyId?: string;
   topic_slug?: string;
+  /** Quando definido, lista só denúncias deste autor (ex.: `author=me` na API). */
+  authorId?: string;
 } = {}): Promise<ComplaintDisplay[]> {
   const docs = await complaintRepository.findWithAuthor({
     limit: options.limit ?? 50,
@@ -376,6 +388,7 @@ export async function getFeed(options: {
     status: options.status,
     company_id: options.companyId,
     topic_slug: options.topic_slug,
+    author_id: options.authorId,
   });
   return formatFeed(docs);
 }
@@ -714,6 +727,72 @@ export async function addOfficialResponseReply(
     createdAt: new Date(),
   });
   if (!doc) return { success: false, error: "Não foi possível adicionar resposta." };
+  return { success: true, complaint: doc };
+}
+
+/** Réplica + todas as tréplicas que referenciam esta cadeia (parentReplyId). */
+function collectDescendantReplyIds(
+  replies: { id: string; parentReplyId?: string | null }[],
+  rootId: string
+): string[] {
+  const ids = new Set<string>([rootId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const r of replies) {
+      const parent = r.parentReplyId ?? null;
+      if (parent && ids.has(parent) && !ids.has(r.id)) {
+        ids.add(r.id);
+        changed = true;
+      }
+    }
+  }
+  return [...ids];
+}
+
+export async function patchOfficialResponseReply(
+  complaintId: string,
+  responseId: string,
+  replyId: string,
+  userId: string,
+  role: string,
+  content: string
+): Promise<{ success: true; complaint: ComplaintDocument } | { success: false; error: string }> {
+  const complaint = await complaintRepository.findById(complaintId);
+  if (!complaint) return { success: false, error: "Denúncia não encontrada" };
+  const response = (complaint.officialResponses ?? []).find((r) => r.id === responseId);
+  if (!response) return { success: false, error: "Resposta oficial não encontrada." };
+  const reply = (response.replies ?? []).find((rep) => rep.id === replyId);
+  if (!reply) return { success: false, error: "Réplica não encontrada." };
+  const isAdmin = role === UserRole.ADMIN;
+  if (!isAdmin && reply.authorUserId !== userId) {
+    return { success: false, error: "Sem permissão para editar esta réplica." };
+  }
+  const doc = await complaintRepository.updateOfficialResponseReply(complaintId, responseId, replyId, content);
+  if (!doc) return { success: false, error: "Não foi possível atualizar a réplica." };
+  return { success: true, complaint: doc };
+}
+
+export async function deleteOfficialResponseReply(
+  complaintId: string,
+  responseId: string,
+  replyId: string,
+  userId: string,
+  role: string
+): Promise<{ success: true; complaint: ComplaintDocument } | { success: false; error: string }> {
+  const complaint = await complaintRepository.findById(complaintId);
+  if (!complaint) return { success: false, error: "Denúncia não encontrada" };
+  const response = (complaint.officialResponses ?? []).find((r) => r.id === responseId);
+  if (!response) return { success: false, error: "Resposta oficial não encontrada." };
+  const reply = (response.replies ?? []).find((rep) => rep.id === replyId);
+  if (!reply) return { success: false, error: "Réplica não encontrada." };
+  const isAdmin = role === UserRole.ADMIN;
+  if (!isAdmin && reply.authorUserId !== userId) {
+    return { success: false, error: "Sem permissão para eliminar esta réplica." };
+  }
+  const toRemove = collectDescendantReplyIds(response.replies ?? [], replyId);
+  const doc = await complaintRepository.removeOfficialResponseReplies(complaintId, responseId, toRemove);
+  if (!doc) return { success: false, error: "Não foi possível eliminar a réplica." };
   return { success: true, complaint: doc };
 }
 

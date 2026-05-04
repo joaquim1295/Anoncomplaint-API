@@ -30,10 +30,13 @@ function empresaPublicHref(row: { companyName: string; companySlug?: string | nu
 const empresaNameLinkClass =
   "font-medium text-emerald-800 underline-offset-2 hover:text-emerald-950 hover:underline dark:text-emerald-200 dark:hover:text-emerald-50";
 
-export const metadata: Metadata = {
-  title: "Início",
-  description: "Explora denúncias, empresas e tópicos em tempo real.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.home.title"),
+    description: getMessage(messages, "meta.pages.home.description"),
+  };
+}
 
 type PageProps = { searchParams: Promise<{ q?: string; company?: string }> };
 

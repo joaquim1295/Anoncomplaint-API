@@ -1,0 +1,45 @@
+@startuml diagrama1-arquitetura-geral
+title Diagrama 1 - Arquitetura geral (SmartComplaint)
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor "Cidadão / Empresa" as User
+node "Cliente Web" {
+  [Next.js App Router\nReact 19 + RSC] as Web
+}
+node "Cliente Móvel" {
+  [Expo / React Native] as Mobile
+}
+
+cloud "Serviços externos" {
+  [Resend (email)] as Resend
+  [Cloudinary (imagens)] as Cloud
+  [Pusher (tempo real)] as Push
+  [Upstash Redis\n(rate limit)] as Redis
+}
+
+package "Aplicação Next.js (servidor)" {
+  [Middleware\nauth / CORS] as MW
+  [Route Handlers\nREST /api/v1] as API
+  [Serviços de domínio\n*Service.ts] as SVC
+  [Repositórios Mongoose] as REPO
+}
+
+database "MongoDB" as DB
+
+User --> Web
+User --> Mobile
+Web --> MW
+Mobile --> API
+Web --> API
+MW --> API
+API --> SVC
+SVC --> REPO
+REPO --> DB
+SVC --> Resend
+SVC --> Cloud
+SVC --> Push
+API --> Redis
+
+@enduml

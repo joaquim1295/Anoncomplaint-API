@@ -21,12 +21,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     headers,
   });
 
-  const payload = (await response.json().catch(() => ({}))) as { data?: T } & ApiError;
+  const payload = (await response.json().catch(() => ({}))) as { data?: T; meta?: unknown } & ApiError;
 
   if (!response.ok) {
     throw new Error(payload.error?.message ?? `Request failed (${response.status})`);
   }
 
-  return (payload.data as T) ?? (payload as unknown as T);
+  if ("data" in payload && payload.data !== undefined) {
+    return payload.data as T;
+  }
+  return payload as unknown as T;
 }
-

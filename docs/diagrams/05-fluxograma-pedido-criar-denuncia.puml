@@ -1,0 +1,31 @@
+@startuml fluxograma1-pedido-criar-denuncia
+title Fluxograma 1 - Ciclo de pedido: criar denúncia (POST /api/v1/complaints)
+
+start
+:Cliente envia JSON\n(título, texto, empresa, anexos…);
+if (Sessão opcional\n(Utilizador autenticado)?) then (sim)
+  :Associar author_id;
+else (não)
+  :author_id null\n(anonimato conforme regras);
+endif
+:Zod safeParse(input);
+if (válido?) then (não)
+  :400 + issues formatados;
+  stop
+endif
+:Normalizar anexos\n(data URI → Cloudinary se configurado);
+:Moderação paralela:\ntoxicidade + resumo IA privado;
+if (tópico topic_slug?) then (sim)
+  :ensureTopicExists;
+endif
+:complaintRepository.create;
+if (tópico?) then (sim)
+  :incrementComplaintCount;
+  :notifyTopicNewComplaint;
+endif
+:Pusher: feed atualizado;
+:revalidateTag agregados;
+:201 + documento;
+stop
+
+@enduml

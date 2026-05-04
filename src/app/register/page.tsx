@@ -7,10 +7,13 @@ import { ArrowLeft } from "lucide-react";
 import { getI18n } from "../../lib/i18n/request";
 import { getMessage } from "../../lib/i18n/dict";
 
-export const metadata: Metadata = {
-  title: "Criar conta",
-  description: "Registe-se para publicar e seguir denúncias.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.register.title"),
+    description: getMessage(messages, "meta.pages.register.description"),
+  };
+}
 
 export default async function RegisterPage() {
   const { messages } = await getI18n();

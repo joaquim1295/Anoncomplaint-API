@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { getI18n } from "../../lib/i18n/request";
 import { getMessage } from "../../lib/i18n/dict";
 import { ApiDocsClient } from "./ApiDocsClient";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.apiDocs.title"),
+    description: getMessage(messages, "meta.pages.apiDocs.description"),
+  };
+}
 
 export default async function ApiDocsPage() {
   const { messages } = await getI18n();

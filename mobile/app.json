@@ -14,7 +14,13 @@
     ],
     "android": {
       "package": "com.smartcomplaint.mobile"
-    }
+    },
+    "ios": {
+      "bundleIdentifier": "com.smartcomplaint.mobile",
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }
-

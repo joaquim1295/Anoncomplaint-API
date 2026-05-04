@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { getI18n } from "../../lib/i18n/request";
@@ -5,6 +6,14 @@ import { getMessage } from "../../lib/i18n/dict";
 import { getCurrentUser } from "../../lib/getUser";
 import * as notificationRepository from "../../lib/repositories/notification-repository";
 import { NotificacoesView } from "./view";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.notifications.title"),
+    description: getMessage(messages, "meta.pages.notifications.description"),
+  };
+}
 
 export default async function NotificacoesPage() {
   const user = await getCurrentUser();

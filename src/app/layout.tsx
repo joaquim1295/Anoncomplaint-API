@@ -8,34 +8,47 @@ import { SiteHeader } from "../components/layout/SiteHeader";
 import { SiteFooter } from "../components/layout/SiteFooter";
 import { getI18n } from "../lib/i18n/request";
 import { getMessage } from "../lib/i18n/dict";
+import type { AppLocale } from "../lib/i18n/constants";
 import "./globals.css";
 
 const siteUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  icons: {
-    icon: [{ url: "/favicon.ico", type: "image/x-icon", sizes: "any" }],
-    shortcut: "/favicon.ico",
-  },
-  title: {
-    default: "SmartComplaint",
-    template: "%s · SmartComplaint",
-  },
-  description: "Plataforma de denúncias e reclamações com transparência.",
-  openGraph: {
-    type: "website",
-    locale: "pt_PT",
-    siteName: "SmartComplaint",
-    title: "SmartComplaint",
-    description: "Plataforma de denúncias e reclamações com transparência.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "SmartComplaint",
-    description: "Plataforma de denúncias e reclamações com transparência.",
-  },
-};
+function openGraphLocaleTag(locale: AppLocale): string {
+  if (locale === "en") return "en_GB";
+  if (locale === "es") return "es_ES";
+  return "pt_PT";
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale, messages } = await getI18n();
+  const siteName = getMessage(messages, "meta.siteName");
+  const description = getMessage(messages, "meta.defaultDescription");
+  const ogLocale = openGraphLocaleTag(locale);
+  return {
+    metadataBase: new URL(siteUrl),
+    icons: {
+      icon: [{ url: "/favicon.ico", type: "image/x-icon", sizes: "any" }],
+      shortcut: "/favicon.ico",
+    },
+    title: {
+      default: siteName,
+      template: getMessage(messages, "meta.titleTemplate"),
+    },
+    description,
+    openGraph: {
+      type: "website",
+      locale: ogLocale,
+      siteName,
+      title: siteName,
+      description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: siteName,
+      description,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

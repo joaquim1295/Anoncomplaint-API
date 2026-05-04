@@ -14,6 +14,7 @@ import { getPusherClient } from "../../../lib/realtime/pusher-client";
 import { useI18n } from "../../../components/providers/I18nProvider";
 import { AiTranslateTextBlock } from "../../../components/i18n/AiTranslateTextBlock";
 import { ComplaintCompanyResponseForm } from "../../../components/complaints/ComplaintCompanyResponseForm";
+import { OfficialResponseReplyRow } from "../../../components/complaints/OfficialResponseReplyRow";
 
 type CompanyOption = { id: string; name: string };
 
@@ -308,15 +309,18 @@ export function ComplaintDetailView({
                 <p className="text-sm text-zinc-100">{response.content}</p>
                 <div className="mt-2 space-y-2 border-l border-zinc-700 pl-3">
                   {(response.replies ?? []).map((reply) => (
-                    <div key={reply.id}>
-                      <p className="text-xs text-zinc-400">
-                        <Link href={`/u/${reply.authorUserId}`} className="underline-offset-2 hover:underline">
-                          {reply.authorLabel}
-                        </Link>{" "}
-                        - {timelineDateLabels[reply.id] ?? reply.createdAt_label ?? "-"}
-                      </p>
-                      <p className="text-xs text-zinc-200">{reply.content}</p>
-                    </div>
+                    <OfficialResponseReplyRow
+                      key={reply.id}
+                      variant="dark"
+                      complaintId={complaint.id}
+                      responseId={response.id}
+                      reply={{
+                        ...reply,
+                        createdAt_label: reply.createdAt_label ?? timelineDateLabels[reply.id],
+                      }}
+                      currentUserId={currentUserId}
+                      currentUserRole={currentUserRole}
+                    />
                   ))}
                 </div>
               </div>

@@ -3,6 +3,90 @@
     "skipToContent": "Skip to content",
     "mobileNav": "Mobile navigation"
   },
+  "meta": {
+    "siteName": "SmartComplaint",
+    "titleTemplate": "%s · SmartComplaint",
+    "defaultDescription": "A transparent platform for complaints and reports.",
+    "pages": {
+      "home": {
+        "title": "Home",
+        "description": "Explore complaints, companies and topics in real time."
+      },
+      "login": {
+        "title": "Sign in",
+        "description": "Log in to your SmartComplaint account."
+      },
+      "register": {
+        "title": "Create account",
+        "description": "Sign up to post and follow complaints."
+      },
+      "search": {
+        "title": "Advanced search",
+        "description": "Filter complaints by text, company, status and city."
+      },
+      "inbox": {
+        "title": "Inbox",
+        "description": "Messages and conversations with companies and moderators."
+      },
+      "analytics": {
+        "title": "Statistics",
+        "description": "Trends, map and complaint and reputation metrics."
+      },
+      "profile": {
+        "title": "My profile",
+        "description": "Account settings, companies and preferences."
+      },
+      "companyDashboard": {
+        "title": "Company dashboard",
+        "description": "Manage complaints and messages as a company."
+      },
+      "map": {
+        "title": "Transparency radar",
+        "description": "Complaint map and company rankings."
+      },
+      "activities": {
+        "title": "My activity",
+        "description": "Complaints and interactions linked to your account."
+      },
+      "report": {
+        "title": "Technical report",
+        "description": "Architecture, data flows and platform security guarantees."
+      },
+      "admin": {
+        "title": "Admin dashboard",
+        "description": "Manage users, complaints and company verification requests."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Alerts about complaints, replies and messages."
+      },
+      "apiDocs": {
+        "title": "API documentation",
+        "description": "SmartComplaint OpenAPI catalogue and Swagger explorer."
+      },
+      "verifyEmail": {
+        "title": "Verify email",
+        "description": "Confirm your account email address."
+      },
+      "verifyCompany": {
+        "title": "Verify company",
+        "description": "Confirm the corporate domain for your company request."
+      },
+      "resetPassword": {
+        "title": "Reset password",
+        "description": "Set a new password using the link sent by email."
+      }
+    },
+    "reclamacao": {
+      "fallbackTitle": "Complaint",
+      "descriptionWithCompany": "Complaint about {{company}}.",
+      "descriptionDefault": "Complaint on the SmartComplaint platform."
+    },
+    "empresaPublic": {
+      "fallbackTitle": "Company",
+      "descriptionTemplate": "Complaints, official replies and reputation for {{name}}."
+    }
+  },
   "nav": {
     "section": "Navigation",
     "home": "Home",
@@ -119,6 +203,14 @@
     "toastOfficialError": "Could not send official response.",
     "toastReplyLogin": "Sign in to reply.",
     "toastReplyError": "Could not send reply.",
+    "replyEdit": "Edit",
+    "replyDelete": "Delete",
+    "replySave": "Save",
+    "replyEditOk": "Reply updated.",
+    "replyEditError": "Could not edit reply.",
+    "replyDeleteOk": "Reply deleted.",
+    "replyDeleteError": "Could not delete reply.",
+    "replyDeleteConfirm": "Delete this reply and nested responses? This cannot be undone.",
     "registeredAuthor": "Registered author",
     "editedBadge": "Edited"
   },

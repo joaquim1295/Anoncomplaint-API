@@ -30,6 +30,7 @@ import { Button } from "./ui/Button";
 import { Textarea } from "./ui/Textarea";
 import { AiContextModal } from "./complaints/AiContextModal";
 import { ComplaintCompanyResponseForm } from "./complaints/ComplaintCompanyResponseForm";
+import { OfficialResponseReplyRow } from "./complaints/OfficialResponseReplyRow";
 import { useI18n } from "./providers/I18nProvider";
 import { AiTranslateTextBlock } from "./i18n/AiTranslateTextBlock";
 
@@ -458,28 +459,18 @@ export function ComplaintItem({
             {(officialResponse.replies ?? []).length > 0 && (
               <div className="mt-3 space-y-2 border-l border-zinc-300/80 pl-3 dark:border-zinc-700/70">
                 {(officialResponse.replies ?? []).map((reply) => (
-                  <div key={reply.id} className="rounded-lg bg-white/80 p-2 ring-1 ring-zinc-200/80 dark:bg-zinc-900/30 dark:ring-0">
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                      <Link href={`/u/${reply.authorUserId}`} className="underline-offset-2 hover:underline">
-                        {reply.authorLabel}
-                      </Link>{" "}
-                      {reply.createdAt_label ? `- ${reply.createdAt_label}` : ""}
-                    </p>
-                    <p className="text-xs whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">{reply.content}</p>
-                    {canReplyToResponse && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="mt-1 h-7 rounded-lg px-2 text-[11px]"
-                        onClick={() =>
-                          setReplyParentByResponse((prev) => ({ ...prev, [officialResponse.id]: reply.id }))
-                        }
-                      >
-                        {t("complaintCard.reply")}
-                      </Button>
-                    )}
-                  </div>
+                  <OfficialResponseReplyRow
+                    key={reply.id}
+                    complaintId={complaint.id}
+                    responseId={officialResponse.id}
+                    reply={reply}
+                    currentUserId={currentUserId ?? null}
+                    currentUserRole={currentUserRole ?? null}
+                    showReplyButton={canReplyToResponse}
+                    onReplyClick={() =>
+                      setReplyParentByResponse((prev) => ({ ...prev, [officialResponse.id]: reply.id }))
+                    }
+                  />
                 ))}
               </div>
             )}

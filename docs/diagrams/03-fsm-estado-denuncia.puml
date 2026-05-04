@@ -1,0 +1,30 @@
+@startuml diagrama3-fsm-denuncia
+title Diagrama 3 - Estados da denúncia (domínio)
+
+hide empty description
+skinparam state {
+  BackgroundColor<<pending>> #fff9c4
+  BackgroundColor<<resolved>> #c8e6c9
+}
+
+[*] --> pending : criação\n(conteúdo OK)
+
+pending --> pending_review : moderação\ndeteta conteúdo\nsensível
+pending --> reviewed : empresa / sistema\nmarca revista
+pending --> resolved : autor resolve
+
+pending_review --> reviewed : aprovação\n(admin / pipeline)
+pending_review --> archived : rejeição
+
+reviewed --> resolved : resolução\npelo autor
+resolved --> archived : arquivo\n(admin / política)
+
+archived --> [*]
+
+note right of pending_review
+  Visibilidade restrita
+  na API pública
+  (só autor ou admin)
+end note
+
+@enduml

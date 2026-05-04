@@ -3,6 +3,90 @@
     "skipToContent": "Saltar para o conteúdo",
     "mobileNav": "Navegação móvel"
   },
+  "meta": {
+    "siteName": "SmartComplaint",
+    "titleTemplate": "%s · SmartComplaint",
+    "defaultDescription": "Plataforma de denúncias e reclamações com transparência.",
+    "pages": {
+      "home": {
+        "title": "Início",
+        "description": "Explora denúncias, empresas e tópicos em tempo real."
+      },
+      "login": {
+        "title": "Iniciar sessão",
+        "description": "Entre na sua conta SmartComplaint."
+      },
+      "register": {
+        "title": "Criar conta",
+        "description": "Registe-se para publicar e seguir denúncias."
+      },
+      "search": {
+        "title": "Pesquisa avançada",
+        "description": "Filtre denúncias por texto, empresa, estado e cidade."
+      },
+      "inbox": {
+        "title": "Caixa de entrada",
+        "description": "Mensagens e conversas com empresas e moderadores."
+      },
+      "analytics": {
+        "title": "Estatísticas",
+        "description": "Tendências, mapa e métricas de denúncias e reputação."
+      },
+      "profile": {
+        "title": "O meu perfil",
+        "description": "Definições da conta, empresas e preferências."
+      },
+      "companyDashboard": {
+        "title": "Painel Empresa",
+        "description": "Gestão de denúncias e mensagens como empresa."
+      },
+      "map": {
+        "title": "Radar de transparência",
+        "description": "Mapa de denúncias e rankings de empresas."
+      },
+      "activities": {
+        "title": "As minhas actividades",
+        "description": "Denúncias e interações ligadas à sua conta."
+      },
+      "report": {
+        "title": "Relatório técnico",
+        "description": "Arquitetura, fluxos de dados e garantias de segurança da plataforma."
+      },
+      "admin": {
+        "title": "Painel de administração",
+        "description": "Gestão de utilizadores, denúncias e pedidos de verificação de empresa."
+      },
+      "notifications": {
+        "title": "Notificações",
+        "description": "Alertas sobre denúncias, respostas e mensagens."
+      },
+      "apiDocs": {
+        "title": "Documentação da API",
+        "description": "Catálogo OpenAPI e explorador Swagger da SmartComplaint."
+      },
+      "verifyEmail": {
+        "title": "Verificar email",
+        "description": "Confirme o endereço de email da sua conta."
+      },
+      "verifyCompany": {
+        "title": "Verificar empresa",
+        "description": "Confirme o domínio corporativo do pedido de empresa."
+      },
+      "resetPassword": {
+        "title": "Redefinir palavra-passe",
+        "description": "Defina uma nova palavra-passe com o link enviado por email."
+      }
+    },
+    "reclamacao": {
+      "fallbackTitle": "Denúncia",
+      "descriptionWithCompany": "Denúncia sobre {{company}}.",
+      "descriptionDefault": "Denúncia na plataforma SmartComplaint."
+    },
+    "empresaPublic": {
+      "fallbackTitle": "Empresa",
+      "descriptionTemplate": "Denúncias, respostas oficiais e reputação de {{name}}."
+    }
+  },
   "nav": {
     "section": "Navegação",
     "home": "Início",
@@ -119,6 +203,14 @@
     "toastOfficialError": "Não foi possível enviar a resposta oficial.",
     "toastReplyLogin": "Inicie sessão para responder.",
     "toastReplyError": "Não foi possível enviar réplica.",
+    "replyEdit": "Editar",
+    "replyDelete": "Eliminar",
+    "replySave": "Guardar",
+    "replyEditOk": "Réplica atualizada.",
+    "replyEditError": "Não foi possível editar a réplica.",
+    "replyDeleteOk": "Réplica eliminada.",
+    "replyDeleteError": "Não foi possível eliminar a réplica.",
+    "replyDeleteConfirm": "Eliminar esta réplica e respostas aninhadas? Esta ação não pode ser anulada.",
     "registeredAuthor": "Autor registado",
     "editedBadge": "Editado"
   },

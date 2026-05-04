@@ -81,8 +81,13 @@ export async function findWithAuthor(
     ];
   }
   if (topic_slug) match.topic_slug = topic_slug.toLowerCase().trim();
-  if (status !== undefined) match.status = status;
-  else match.status = { $ne: ComplaintStatus.PENDING_REVIEW };
+  if (status !== undefined) {
+    match.status = status;
+  } else if (author_id !== undefined && author_id !== null) {
+    /* Feed do próprio autor (ex. mobile `author=me`): incluir pending_review. */
+  } else {
+    match.status = { $ne: ComplaintStatus.PENDING_REVIEW };
+  }
 
   const pipeline: mongoose.PipelineStage[] = [
     { $match: match },
@@ -459,6 +464,48 @@ export async function addOfficialResponseReply(
     { _id: complaintId, "officialResponses.id": responseId },
     {
       $push: { "officialResponses.$.replies": payload },
+      $set: { updated_at: new Date() },
+    },
+    { new: true }
+  ).lean();
+  return doc as ComplaintDocument | null;
+}
+
+export async function updateOfficialResponseReply(
+  complaintId: string,
+  responseId: string,
+  replyId: string,
+  content: string
+): Promise<ComplaintDocument | null> {
+  await getConnection();
+  if (!mongoose.Types.ObjectId.isValid(complaintId)) return null;
+  const doc = await ComplaintModel.findOneAndUpdate(
+    { _id: complaintId },
+    {
+      $set: {
+        "officialResponses.$[or].replies.$[rep].content": content,
+        updated_at: new Date(),
+      },
+    },
+    {
+      new: true,
+      arrayFilters: [{ "or.id": responseId }, { "rep.id": replyId }],
+    }
+  ).lean();
+  return doc as ComplaintDocument | null;
+}
+
+export async function removeOfficialResponseReplies(
+  complaintId: string,
+  responseId: string,
+  replyIds: string[]
+): Promise<ComplaintDocument | null> {
+  await getConnection();
+  if (!mongoose.Types.ObjectId.isValid(complaintId) || replyIds.length === 0) return null;
+  const doc = await ComplaintModel.findOneAndUpdate(
+    { _id: complaintId, "officialResponses.id": responseId },
+    {
+      $pull: { "officialResponses.$.replies": { id: { $in: replyIds } } },
       $set: { updated_at: new Date() },
     },
     { new: true }

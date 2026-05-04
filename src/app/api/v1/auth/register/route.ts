@@ -89,12 +89,16 @@ export async function POST(request: Request) {
     maxAge: MAX_AGE,
     path: "/",
   });
-  return jsonData({
-    id: String(result.user._id),
-    email: result.user.email,
-    username: result.user.username ?? null,
-    role: result.user.role ?? UserRole.USER,
-    companyRequest,
-  }, { status: 201 });
+  return jsonData(
+    {
+      token,
+      id: String(result.user._id),
+      email: result.user.email,
+      username: result.user.username ?? null,
+      role: result.user.role ?? UserRole.USER,
+      companyRequest,
+    },
+    { status: 201 }
+  );
 }
 

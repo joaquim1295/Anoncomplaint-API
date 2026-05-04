@@ -79,6 +79,17 @@ describe("createComplaint", () => {
 });
 
 describe("formatFeed and toDisplay", () => {
+  it("strips internal company ObjectId and bare hex tags from display", () => {
+    const companyHex = "507f1f77bcf86cd799439012";
+    const doc = {
+      ...mockDoc,
+      companyId: companyHex,
+      tags: [companyHex, "#transito", "foo", "69f12842ed2120bb8db0a297"],
+    } as unknown as ComplaintDocument;
+    const displayed = complaintService.formatFeed([doc])[0];
+    expect(displayed.tags).toEqual(["#transito", "foo"]);
+  });
+
   it("formats documents with created_at_label and author_label", () => {
     const docs = [mockDoc];
     const displayed = complaintService.formatFeed(docs);

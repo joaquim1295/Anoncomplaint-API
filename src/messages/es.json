@@ -3,6 +3,90 @@
     "skipToContent": "Ir al contenido",
     "mobileNav": "Navegación móvil"
   },
+  "meta": {
+    "siteName": "SmartComplaint",
+    "titleTemplate": "%s · SmartComplaint",
+    "defaultDescription": "Plataforma transparente de denuncias y reclamaciones.",
+    "pages": {
+      "home": {
+        "title": "Inicio",
+        "description": "Explora denuncias, empresas y tópicos en tiempo real."
+      },
+      "login": {
+        "title": "Iniciar sesión",
+        "description": "Accede a tu cuenta SmartComplaint."
+      },
+      "register": {
+        "title": "Crear cuenta",
+        "description": "Regístrate para publicar y seguir denuncias."
+      },
+      "search": {
+        "title": "Búsqueda avanzada",
+        "description": "Filtra denuncias por texto, empresa, estado y ciudad."
+      },
+      "inbox": {
+        "title": "Bandeja de entrada",
+        "description": "Mensajes y conversaciones con empresas y moderadores."
+      },
+      "analytics": {
+        "title": "Estadísticas",
+        "description": "Tendencias, mapa y métricas de denuncias y reputación."
+      },
+      "profile": {
+        "title": "Mi perfil",
+        "description": "Ajustes de cuenta, empresas y preferencias."
+      },
+      "companyDashboard": {
+        "title": "Panel de empresa",
+        "description": "Gestión de denuncias y mensajes como empresa."
+      },
+      "map": {
+        "title": "Radar de transparencia",
+        "description": "Mapa de denuncias y rankings de empresas."
+      },
+      "activities": {
+        "title": "Mi actividad",
+        "description": "Denuncias e interacciones vinculadas a tu cuenta."
+      },
+      "report": {
+        "title": "Informe técnico",
+        "description": "Arquitectura, flujos de datos y garantías de seguridad de la plataforma."
+      },
+      "admin": {
+        "title": "Panel de administración",
+        "description": "Gestión de usuarios, denuncias y solicitudes de verificación de empresa."
+      },
+      "notifications": {
+        "title": "Notificaciones",
+        "description": "Alertas sobre denuncias, respuestas y mensajes."
+      },
+      "apiDocs": {
+        "title": "Documentación de la API",
+        "description": "Catálogo OpenAPI y explorador Swagger de SmartComplaint."
+      },
+      "verifyEmail": {
+        "title": "Verificar correo",
+        "description": "Confirma la dirección de correo de tu cuenta."
+      },
+      "verifyCompany": {
+        "title": "Verificar empresa",
+        "description": "Confirma el dominio corporativo de la solicitud de empresa."
+      },
+      "resetPassword": {
+        "title": "Restablecer contraseña",
+        "description": "Establece una nueva contraseña con el enlace enviado por correo."
+      }
+    },
+    "reclamacao": {
+      "fallbackTitle": "Denuncia",
+      "descriptionWithCompany": "Denuncia sobre {{company}}.",
+      "descriptionDefault": "Denuncia en la plataforma SmartComplaint."
+    },
+    "empresaPublic": {
+      "fallbackTitle": "Empresa",
+      "descriptionTemplate": "Denuncias, respuestas oficiales y reputación de {{name}}."
+    }
+  },
   "nav": {
     "section": "Navegación",
     "home": "Inicio",
@@ -119,6 +203,14 @@
     "toastOfficialError": "No se pudo enviar la respuesta oficial.",
     "toastReplyLogin": "Inicie sesión para responder.",
     "toastReplyError": "No se pudo enviar la réplica.",
+    "replyEdit": "Editar",
+    "replyDelete": "Eliminar",
+    "replySave": "Guardar",
+    "replyEditOk": "Réplica actualizada.",
+    "replyEditError": "No se pudo editar la réplica.",
+    "replyDeleteOk": "Réplica eliminada.",
+    "replyDeleteError": "No se pudo eliminar la réplica.",
+    "replyDeleteConfirm": "¿Eliminar esta réplica y las respuestas anidadas? Esta acción no se puede deshacer.",
     "registeredAuthor": "Autor registrado",
     "editedBadge": "Editado"
   },

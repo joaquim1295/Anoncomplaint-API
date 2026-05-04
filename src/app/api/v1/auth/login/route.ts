@@ -40,6 +40,7 @@ export async function POST(request: Request) {
     path: "/",
   });
   return jsonData({
+    token,
     user: {
       id: String(result.user._id),
       email: result.user.email,

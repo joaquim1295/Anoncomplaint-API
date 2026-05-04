@@ -49,6 +49,14 @@ function toIso(d: Date | string | null | undefined): string {
   return typeof d === "string" ? d : d.toISOString();
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.admin.title"),
+    description: getMessage(messages, "meta.pages.admin.description"),
+  };
+}
+
 export default async function AdminPage() {
   const [{ messages }, users, complaints, companyRequests] = await Promise.all([
     getI18n(),

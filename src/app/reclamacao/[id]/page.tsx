@@ -2,21 +2,26 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "../../../lib/getUser";
 import * as complaintService from "../../../lib/complaintService";
+import { getI18n } from "../../../lib/i18n/request";
+import { getMessage } from "../../../lib/i18n/dict";
 import { ComplaintDetailView } from "./view";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
+  const [{ id }, { messages }] = await Promise.all([params, getI18n()]);
+  const fbTitle = getMessage(messages, "meta.reclamacao.fallbackTitle");
   const complaint = await complaintService.getComplaintByIdForViewer(id, null);
   if (!complaint) {
-    return { title: "Denúncia" };
+    return { title: fbTitle };
   }
-  const title = (complaint.title ?? "").trim() || "Denúncia";
-  return {
-    title,
-    description: complaint.companyName ? `Denúncia sobre ${complaint.companyName}.` : "Denúncia na plataforma SmartComplaint.",
-  };
+  const title = (complaint.title ?? "").trim() || fbTitle;
+  const descWith = getMessage(messages, "meta.reclamacao.descriptionWithCompany");
+  const descDefault = getMessage(messages, "meta.reclamacao.descriptionDefault");
+  const description = complaint.companyName
+    ? descWith.replace("{{company}}", complaint.companyName)
+    : descDefault;
+  return { title, description };
 }
 
 export default async function ReclamacaoDetailPage({

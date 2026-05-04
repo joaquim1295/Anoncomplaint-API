@@ -12,10 +12,13 @@ import { getMessage } from "../../lib/i18n/dict";
 
 export const revalidate = 120;
 
-export const metadata: Metadata = {
-  title: "Radar de transparência",
-  description: "Mapa de denúncias e rankings de empresas.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { messages } = await getI18n();
+  return {
+    title: getMessage(messages, "meta.pages.map.title"),
+    description: getMessage(messages, "meta.pages.map.description"),
+  };
+}
 
 function intensityForStatus(status: string): number {
   if (status === ComplaintStatus.PENDING_REVIEW) return 1.0;
