@@ -49,15 +49,30 @@ export async function getPendingCompanyVerificationRequests(): Promise<CompanyVe
 export async function approveCompanyVerificationRequest(
   requestId: string,
   adminUserId: string,
-  options?: { locale?: AppLocale }
+  options?: { locale?: AppLocale; approveWithoutEmailVerification?: boolean }
 ): Promise<
-  | { success: true; userId: string }
+  | { success: true; userId: string; approvedWithoutEmailVerification?: boolean }
   | { success: false; error: string }
 > {
   const request = await companyVerificationRepository.findById(requestId);
   if (!request) return { success: false, error: "Pedido não encontrado." };
-  if (request.status !== CompanyVerificationStatus.EMAIL_VERIFIED) {
-    return { success: false, error: "Pedido não está elegível para aprovação (confirme o email primeiro)." };
+  if (request.status === CompanyVerificationStatus.APPROVED) {
+    return { success: false, error: "Pedido já aprovado." };
+  }
+  if (request.status === CompanyVerificationStatus.REJECTED) {
+    return { success: false, error: "Pedido já rejeitado." };
+  }
+  const allowPending =
+    request.status === CompanyVerificationStatus.PENDING && Boolean(options?.approveWithoutEmailVerification);
+  if (request.status === CompanyVerificationStatus.PENDING && !allowPending) {
+    return {
+      success: false,
+      error:
+        "Pedido aguarda confirmação de email. Aprove explicitamente sem essa confirmação (painel admin) ou peça ao requerente que confirme o email.",
+    };
+  }
+  if (request.status !== CompanyVerificationStatus.EMAIL_VERIFIED && !allowPending) {
+    return { success: false, error: "Pedido não está elegível para aprovação." };
   }
   const user = await userRepository.findUserById(request.userId);
   if (!user) return { success: false, error: "Utilizador não encontrado." };
@@ -83,7 +98,11 @@ export async function approveCompanyVerificationRequest(
     to: request.email,
     companyName: request.companyName,
   });
-  return { success: true, userId: request.userId };
+  return {
+    success: true,
+    userId: request.userId,
+    approvedWithoutEmailVerification: allowPending,
+  };
 }
 
 export async function rejectCompanyVerificationRequest(

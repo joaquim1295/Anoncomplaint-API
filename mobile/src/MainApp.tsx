@@ -4,7 +4,6 @@ import {
   FlatList,
   Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import { apiRequest, API_BASE_URL } from "./api/client";
@@ -281,7 +281,7 @@ export function MainApp() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["top", "right", "left", "bottom"]}>
         <StatusBar style="light" />
         <ActivityIndicator color="#10b981" />
         <Text style={styles.muted}>A carregar…</Text>
@@ -290,7 +290,7 @@ export function MainApp() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "right", "left", "bottom"]}>
       <StatusBar style="light" />
       <View style={styles.header}>
         <Text style={styles.brand}>
@@ -310,7 +310,6 @@ export function MainApp() {
             <TabButton active={tab === "search"} label="Pesquisa" onPress={() => setTab("search")} />
             <TabButton active={tab === "auth"} label="Entrar" onPress={() => setTab("auth")} />
           </View>
-          <Text style={[styles.muted, { paddingHorizontal: 16, paddingTop: 6 }]}>API: {API_BASE_URL}</Text>
 
           {tab === "feed" && (
             <FlatList
@@ -617,7 +616,7 @@ export function MainApp() {
       )}
 
       <Modal visible={detail !== null} animationType="slide" onRequestClose={() => setDetail(null)}>
-        <SafeAreaView style={styles.modal}>
+        <SafeAreaView style={styles.modal} edges={["top", "right", "left", "bottom"]}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setDetail(null)}>
               <Text style={styles.link}>← Voltar</Text>
@@ -692,7 +691,7 @@ function RowLink({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#070A12", paddingTop: 8 },
+  container: { flex: 1, backgroundColor: "#070A12" },
   center: { flex: 1, backgroundColor: "#070A12", alignItems: "center", justifyContent: "center", gap: 12 },
   header: { paddingHorizontal: 16, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: "#27272a" },
   brand: { fontSize: 18, fontWeight: "700" },

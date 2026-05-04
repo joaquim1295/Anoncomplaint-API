@@ -668,6 +668,22 @@ export function getOpenApiSpec() {
           summary: "Approve company verification request",
           security: [{ bearerAuth: [] }],
           parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+          requestBody: {
+            required: false,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    approveWithoutEmailVerification: {
+                      type: "boolean",
+                      description: "When true, admin may approve while request status is still pending (email not verified).",
+                    },
+                  },
+                },
+              },
+            },
+          },
           responses: {
             "200": { description: "Request approved" },
             "400": { description: "Approve failed", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },

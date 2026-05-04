@@ -17,11 +17,13 @@ type DialogState =
   | { open: false }
   | {
       open: true;
-      kind: "banUser" | "forceDeleteComplaint";
+      kind: "banUser" | "forceDeleteComplaint" | "approveCompanyUnverified";
       id: string;
       title: string;
       description: string;
       confirmLabel: string;
+      /** Se false, botão de confirmação usa estilo primário (ex.: aprovar empresa). */
+      confirmDestructive?: boolean;
     };
 
 function formatIso(iso: string | null, localeTag: string): string {
@@ -102,6 +104,7 @@ export function AdminView({
       title: t("admin.banUserTitle"),
       description: t("admin.banUserDesc").replace("{{email}}", u.email),
       confirmLabel: t("admin.confirmBan"),
+      confirmDestructive: true,
     });
   }
 
@@ -113,6 +116,21 @@ export function AdminView({
       title: t("admin.deleteComplaintTitle"),
       description: t("admin.deleteComplaintDesc"),
       confirmLabel: t("admin.confirmDelete"),
+      confirmDestructive: true,
+    });
+  }
+
+  function openApproveCompanyWithoutEmail(r: AdminCompanyVerificationRow) {
+    setDialog({
+      open: true,
+      kind: "approveCompanyUnverified",
+      id: r.id,
+      title: t("admin.approveCompanyNoEmailTitle"),
+      description: t("admin.approveCompanyNoEmailDesc")
+        .replace("{{company}}", r.companyName)
+        .replace("{{email}}", r.email),
+      confirmLabel: t("admin.confirmApproveWithoutEmail"),
+      confirmDestructive: false,
     });
   }
 
@@ -131,7 +149,7 @@ export function AdminView({
             return;
           }
           toast.success(t("admin.toastBanned"));
-        } else {
+        } else if (dialog.kind === "forceDeleteComplaint") {
           const response = await fetch(`/api/v1/admin/complaints/${dialog.id}`, {
             method: "DELETE",
             credentials: "include",
@@ -142,6 +160,20 @@ export function AdminView({
             return;
           }
           toast.success(t("admin.toastDeleted"));
+        } else if (dialog.kind === "approveCompanyUnverified") {
+          const response = await fetch(`/api/v1/admin/company-requests/${dialog.id}/approve`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ approveWithoutEmailVerification: true }),
+          });
+          const res = await response.json().catch(() => null);
+          if (!response.ok) {
+            toast.error(res?.error?.message ?? t("admin.toastApproveFail"));
+            return;
+          }
+          toast.success(t("admin.toastApproved"));
+          toast.warning(t("admin.toastApprovedPendingEmail"));
         }
         closeDialog();
         router.refresh();
@@ -185,12 +217,18 @@ export function AdminView({
     });
   }
 
-  function approveCompanyRequest(id: string) {
+  function approveCompanyRequest(r: AdminCompanyVerificationRow) {
+    if (r.status === "pending") {
+      openApproveCompanyWithoutEmail(r);
+      return;
+    }
     startTransition(async () => {
       try {
-        const response = await fetch(`/api/v1/admin/company-requests/${id}/approve`, {
+        const response = await fetch(`/api/v1/admin/company-requests/${r.id}/approve`, {
           method: "POST",
           credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approveWithoutEmailVerification: false }),
         });
         const res = await response.json().catch(() => null);
         if (!response.ok) {
@@ -536,7 +574,7 @@ export function AdminView({
                               size="sm"
                               variant="secondary"
                               disabled={pending || !canApprove}
-                              onClick={() => approveCompanyRequest(r.id)}
+                              onClick={() => approveCompanyRequest(r)}
                             >
                               {t("admin.approve")}
                             </Button>
@@ -578,7 +616,11 @@ export function AdminView({
                     {t("admin.cancelDialog")}
                   </Button>
                 </Dialog.Close>
-                <Button variant="destructive" disabled={pending} onClick={confirm}>
+                <Button
+                  variant={dialog.open && dialog.confirmDestructive === false ? "default" : "destructive"}
+                  disabled={pending}
+                  onClick={confirm}
+                >
                   {dialog.open ? dialog.confirmLabel : t("admin.dialogConfirmDefault")}
                 </Button>
               </div>
